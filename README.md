@@ -9,8 +9,10 @@ Progressive Versions
 V1 (One VPC with Internet Connectivity on two AZ)
 ![alt text](10_Infrastructure/aws-playground-infrastructure.jpg "Infra")
 
-V2 (Two VPC with Internet Connectivity on two AZ - VPC peering on private subnets)
+V2 (+ VPC peering on private subnets)
 ![alt text](10_Infrastructure/aws-playground-infrastructure_v2.jpg "Infra")
 
+V3 (+Transit GW with BGP, SG and EC2 on private subnets , On Prem infrastructure )
+![alt text](10_Infrastructure/aws-playground-infrastructure_v3.jpg "Infra")
 
 
