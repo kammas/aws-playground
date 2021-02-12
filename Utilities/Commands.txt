@@ -1,0 +1,9 @@
+
+#configure profiles
+aws configure --profile default
+
+#ls s3 on your account
+aws s3 ls
+
+#ls s3 using login of <USER_PROFILE> and roleswitch to member account
+aws s3 ls --profile <USER_PROFILE>
