@@ -6,13 +6,13 @@ Playground for CloudFormation - This project will be built up incrementally tryi
 ## Infrastructure
 Progressive Versions
 
-V1 (One VPC with Internet Connectivity on two AZ)
+### V1 (One VPC with Internet Connectivity on two AZ) </p>
 ![alt text](10_Infrastructure/aws-playground-infrastructure.jpg "Infra")
 
-V2 (+ VPC peering on private subnets)
+### V2 (+ VPC peering on private subnets) </p>
 ![alt text](10_Infrastructure/aws-playground-infrastructure_v2.jpg "Infra")
 
-V3 (+Transit GW with BGP, SG and EC2 on private subnets , On Prem infrastructure )
+### V3 (+Transit GW with BGP, SG and EC2 on private subnets , On Prem infrastructure ) </p>
 ![alt text](10_Infrastructure/aws-playground-infrastructure_v3.jpg "Infra")
 
 
