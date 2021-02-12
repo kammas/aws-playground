@@ -1,5 +1,5 @@
 # aws-playground
-Playground for CloudFormation - This project will be built up incrementally per chapter, tryint to automate actions related to Adrian Cantrill's course for SAP
+Playground for CloudFormation - This project will be built up incrementally trying to setup an environment for experimentation
 
 ## Infrastructure
 Progressive Versions
