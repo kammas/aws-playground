@@ -8,7 +8,7 @@ V1
 ![alt text](10_Infrastructure/aws-playground-infrastructure.jpg "Infra")
 
 V2
-![alt text](10_Infrastructure/aws-playground-infrastructurev2.jpg "Infra")
+![alt text](10_Infrastructure/aws-playground-infrastructure_v2.jpg "Infra")
 
 
 
