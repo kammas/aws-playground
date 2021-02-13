@@ -15,6 +15,10 @@ Mappings:
       SubnetPrivB2: '10.16.160.0/19'
       SubnetPubA2: '10.16.192.0/19'
       SubnetPubB2: '10.16.224.0/19'
+      VpcCidrOnPrem1: '192.168.8.0/21'
+      SubnetPubOnPrem1: '192.168.12.0/24'
+      SubnetPrivOnPrem1: '192.168.10.0/24'
+      SubnetPrivOnPrem2: '192.168.11.0/24'
 Parameters:
   LatestAmiId:
     Description: AMI for Bastion Host (default is latest AmaLinux2)
@@ -264,7 +268,7 @@ Resources:
           CidrIp: '0.0.0.0/0'
         - Description: 'Allow ALL from ONPREM Networks'
           IpProtocol: "-1"
-          CidrIp: '192.168.8.0/21'
+          CidrIp: !FindInMap [ Network, Settings, VpcCidrOnPrem1 ]
   InstanceSGSelfReferenceRule:
     Type: "AWS::EC2::SecurityGroupIngress"
     Properties:
@@ -427,7 +431,7 @@ Resources:
     Properties:
         RouteTableId:
           Ref: awsPrivateRouteTable1
-        DestinationCidrBlock: 10.16.128.0/17
+        DestinationCidrBlock: !FindInMap [ Network, Settings, VpcCidr2 ]
         VpcPeeringConnectionId:
           Ref: vpcpeer12
   awsVpcPeerRoute2:
@@ -436,9 +440,10 @@ Resources:
     Properties:
         RouteTableId:
           Ref: awsPrivateRouteTable2
-        DestinationCidrBlock: 10.16.0.0/17
+        DestinationCidrBlock: !FindInMap [ Network, Settings, VpcCidr1 ]
         VpcPeeringConnectionId:
           Ref: vpcpeer12
+       
          
                   
              
