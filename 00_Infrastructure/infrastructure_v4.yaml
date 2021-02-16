@@ -172,7 +172,7 @@ Resources:
         - !Ref InstanceSG
       Tags:
         - Key: Name
-          Value: AWS-EC2-A
+          Value: PRIVA1
   EC2B1:
     Type: AWS::EC2::Instance
     DependsOn: 
@@ -188,8 +188,8 @@ Resources:
         - !Ref InstanceSG
       Tags:
         - Key: Name
-          Value: AWS-EC2-B
-  EC2Role:
+          Value: PRIVB1
+  EC2Role1:
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
@@ -254,7 +254,7 @@ Resources:
     Properties:
       Path: /
       Roles:
-        - !Ref EC2Role
+        - !Ref EC2Role1
   InstanceSG:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -443,6 +443,128 @@ Resources:
         DestinationCidrBlock: !FindInMap [ Network, Settings, VpcCidr1 ]
         VpcPeeringConnectionId:
           Ref: vpcpeer12
+  EC2Role2:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        - "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+        - "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+  EC2InstanceProfile2:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EC2Role2
+  EC2A2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: "t2.micro"
+      ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref EC2InstanceProfile2
+      SubnetId: !Ref awsPublicSubnetA2
+      SecurityGroupIds: 
+        - !Ref WebInstanceSecurityGroup2
+      Tags:
+        - Key: Name
+          Value: WEBA2
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum -y update
+          yum -y install httpd wget
+          wget https://pk-sharedmedia.s3.amazonaws.com/index.html -P /var/www/html
+          wget https://pk-sharedmedia.s3.amazonaws.com/sample1.jpg -P /var/www/html
+          usermod -a -G apache ec2-user   
+          chown -R ec2-user:apache /var/www
+          chmod 2775 /var/www
+          find /var/www -type d -exec chmod 2775 {} \;
+          find /var/www -type f -exec chmod 0664 {} \;
+          systemctl enable httpd
+          systemctl start httpd
+          rpm -Uvh https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+          # CWAgent Fix
+          mkdir -p /usr/share/collectd/
+          touch /usr/share/collectd/types.db
+          # CWAgent Fix End
+          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c ssm:${CloudWatchLinuxConfig} -s
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource EC2A2 --region ${AWS::Region}
+  EC2B2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: "t2.micro"
+      ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref EC2InstanceProfile2
+      SubnetId: !Ref awsPublicSubnetB2
+      SecurityGroupIds: 
+        - !Ref WebInstanceSecurityGroup2
+      Tags:
+        - Key: Name
+          Value: WEBB2
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum -y update
+          yum -y install httpd wget
+          wget -O index.html https://pk-sharedmedia.s3.amazonaws.com/error.html -P /var/www/html
+          usermod -a -G apache ec2-user   
+          chown -R ec2-user:apache /var/www
+          chmod 2775 /var/www
+          find /var/www -type d -exec chmod 2775 {} \;
+          find /var/www -type f -exec chmod 0664 {} \;
+          systemctl enable httpd
+          systemctl start httpd
+          rpm -Uvh https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+          # CWAgent Fix
+          mkdir -p /usr/share/collectd/
+          touch /usr/share/collectd/types.db
+          # CWAgent Fix End
+          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c ssm:${CloudWatchLinuxConfig} -s
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource EC2B2 --region ${AWS::Region}  
+  WebInstanceSecurityGroup2:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref awsVPC2
+      GroupDescription: Enable SSH access via port 22 IPv4 & v6
+      SecurityGroupIngress: 
+        - Description: 'Allow SSH IPv4 IN'
+          IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: '0.0.0.0/0'
+        - Description: 'Allow HTTP IPv4 IN'
+          IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: '0.0.0.0/0'
+  WebInstanceSecurityGroup2SelfReferenceRule:
+    Type: "AWS::EC2::SecurityGroupIngress"
+    Properties:
+      GroupId: !Ref WebInstanceSecurityGroup2
+      IpProtocol: 'tcp'
+      FromPort: '0'
+      ToPort: '65535'
+      SourceSecurityGroupId: !Ref WebInstanceSecurityGroup2
+  CloudWatchLinuxConfig:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Tier: Standard
+      Description: SSM Parameter for CloudWatchAgent Config
+      Value: "{\n\t\"agent\": {\n\t\t\"metrics_collection_interval\": 60,\n\t\t\"run_as_user\": \"root\"\n\t},\n\t\"logs\": {\n\t\t\"logs_collected\": {\n\t\t\t\"files\": {\n\t\t\t\t\"collect_list\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"file_path\": \"/var/log/secure\",\n\t\t\t\t\t\t\"log_group_name\": \"/var/log/secure\",\n\t\t\t\t\t\t\"log_stream_name\": \"{instance_id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"file_path\": \"/var/log/httpd/access_log\",\n\t\t\t\t\t\t\"log_group_name\": \"/var/log/httpd/access_log\",\n\t\t\t\t\t\t\"log_stream_name\": \"{instance_id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"file_path\": \"/var/log/httpd/error_log\",\n\t\t\t\t\t\t\"log_group_name\": \"/var/log/httpd/error_log\",\n\t\t\t\t\t\t\"log_stream_name\": \"{instance_id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t}\n\t},\n\t\"metrics\": {\n\t\t\"append_dimensions\": {\n\t\t\t\"AutoScalingGroupName\": \"${aws:AutoScalingGroupName}\",\n\t\t\t\"ImageId\": \"${aws:ImageId}\",\n\t\t\t\"InstanceId\": \"${aws:InstanceId}\",\n\t\t\t\"InstanceType\": \"${aws:InstanceType}\"\n\t\t},\n\t\t\"metrics_collected\": {\n\t\t\t\"collectd\": {\n\t\t\t\t\"metrics_aggregation_interval\": 60\n\t\t\t},\n\t\t\t\"cpu\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"cpu_usage_idle\",\n\t\t\t\t\t\"cpu_usage_iowait\",\n\t\t\t\t\t\"cpu_usage_user\",\n\t\t\t\t\t\"cpu_usage_system\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60,\n\t\t\t\t\"resources\": [\n\t\t\t\t\t\"*\"\n\t\t\t\t],\n\t\t\t\t\"totalcpu\": false\n\t\t\t},\n\t\t\t\"disk\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"used_percent\",\n\t\t\t\t\t\"inodes_free\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60,\n\t\t\t\t\"resources\": [\n\t\t\t\t\t\"*\"\n\t\t\t\t]\n\t\t\t},\n\t\t\t\"diskio\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"io_time\",\n\t\t\t\t\t\"write_bytes\",\n\t\t\t\t\t\"read_bytes\",\n\t\t\t\t\t\"writes\",\n\t\t\t\t\t\"reads\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60,\n\t\t\t\t\"resources\": [\n\t\t\t\t\t\"*\"\n\t\t\t\t]\n\t\t\t},\n\t\t\t\"mem\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"mem_used_percent\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60\n\t\t\t},\n\t\t\t\"netstat\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"tcp_established\",\n\t\t\t\t\t\"tcp_time_wait\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60\n\t\t\t},\n\t\t\t\"statsd\": {\n\t\t\t\t\"metrics_aggregation_interval\": 60,\n\t\t\t\t\"metrics_collection_interval\": 10,\n\t\t\t\t\"service_address\": \":8125\"\n\t\t\t},\n\t\t\t\"swap\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"swap_used_percent\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60\n\t\t\t}\n\t\t}\n\t}\n}"
+                 
+       
          
                   
              
