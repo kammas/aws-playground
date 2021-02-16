@@ -517,7 +517,7 @@ Resources:
           #!/bin/bash -xe
           yum -y update
           yum -y install httpd wget
-          wget -O index.html https://pk-sharedmedia.s3.amazonaws.com/error.html -P /var/www/html
+          sudo wget -O index.html https://pk-sharedmedia.s3.amazonaws.com/error.html -P /var/www/html
           usermod -a -G apache ec2-user   
           chown -R ec2-user:apache /var/www
           chmod 2775 /var/www
