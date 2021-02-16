@@ -15,4 +15,5 @@ Progressive Versions
 ### V3 (+Transit GW with BGP, SG and EC2 on private subnets , On Prem infrastructure )
 ![alt text](00_Infrastructure/aws-playground-infrastructure_v3.jpg "Infra")
 
-
+### V4 (+2 Public EC2, one with index and one for failover )
+![alt text](00_Infrastructure/aws-playground-infrastructure_v4.jpg "Infra")
