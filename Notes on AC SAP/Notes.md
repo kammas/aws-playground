@@ -1,7 +1,7 @@
-0.INTRODUCTION & SCENARIO <p>
-    Public Introduction (4:41)
-    Site Tools and Features (8:06)
-    Finding and Using the Course Resources (12:29)
+#0.INTRODUCTION & SCENARIO
+##    Public Introduction (4:41)
+##    Site Tools and Features (8:06)
+##    Finding and Using the Course Resources (12:29)
     AWS Exams (17:32)
     Course Scenario (13:40)
     [OPTIONAL] Connect with other students and your instructor (3:56)
