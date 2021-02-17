@@ -162,6 +162,8 @@ ALB we could have a Source IP Rule vs the usual Host Rule to identify if the req
 NLB faster than ALB, no understanding of Http,Https (no headers, no cookies, no stickiness), poor health check (ICMP/TCP - not app aware), can have Static IP for whitelisting<p>
 NLB unbroken encryption Client to Instance using TCP Listeners. Used with PrivateLink to provide services to other VPCs<p>
 ##  [NEW] Session Stickiness (9:25)
+ALB cookie duration 1s - 7 days. Backend instance will change if a)cookie expires b)instance fails. Needed when backend is stateful and want to use ELB. BAD - Uneven load.<p>
+Cookie AWSALB for ALB (AWSELB for CLB) held by client, locks session to 1 Backend Instance. Optimal is to store session data externally and not use stickiness <p>
 ##  [DEMO] Seeing Session Stickiness in Action (13:29)
 ##  ASG Refresher (16:12)
 ##  ASG Lifecycle Hooks (5:24)
