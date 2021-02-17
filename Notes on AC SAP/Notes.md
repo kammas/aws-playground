@@ -135,7 +135,15 @@
 ##  EC2 Networking (16:21)
 ##  [NEW] Bootstrapping vs AMI Baking (17:09)
 ##  [NEW] Elastic Load Balancer Architecture (ELB) - PART1 (10:26)
+ELB distribute connections of users to back-end services. Load Balancer created with a Single DNS record, type A record<p>
+Provisioning items for consideration:<p>
+a)IPV4 or IPV4+IPV6<p>
+b)AZ used by the ELB (subnets in two or more AZ). Resolves to the Nodes in subnets<p>
+c)Internet facing or internal. Related only to the IP address for the Nodes. Functionality / access is same for interne and internal from Node ELB<p>
+d)Need preferrably a /27 subnet, can work with /28 as well if needed. Need 8+ Free IPs per subnet<p>
 ##  [NEW] Elastic Load Balancer Architecture (ELB) - PART2 (12:50)
+LB support CROSS-ZONE LB. So a LB Node in AZA can forward traffic to AZB instances and vice versa. Feature that needs to be enabled<p>
+ELB is a DNS A record (maps a domain name to the IP address) pointing at Nodes on each AZ<p>
 ##  [NEW] Session State (9:11)
 ##  ELB Evolution (4:10)
 ELB all three Load Balancers<p>
