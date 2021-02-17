@@ -1,4 +1,4 @@
-0.INTRODUCTION & SCENARIO
+0.INTRODUCTION & SCENARIO <p>
     Public Introduction (4:41)
     Site Tools and Features (8:06)
     Finding and Using the Course Resources (12:29)
