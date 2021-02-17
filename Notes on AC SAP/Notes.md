@@ -141,9 +141,18 @@
 ELB all three Load Balancers<p>
 CLB for Http,Https and lower level. Not really layer 7.Lack Http protocol features. More expensive. 1 SSL per CLB. Do not use<p>
 ALB for Http/S/Websocket. Support target group and rules<p>
-NLB for TCP,TLC,UDP.. Support target group and rules<p>
+NLB for TCP,TLC,UDP,TCP_UDP.. Support target group and rules<p>
 ##  Application vs Network Load Balancers (ALB vs NLB) (16:26)
-
+CLB does not scale (1SSL pes CLB). SNI not supported<p>
+ALB supports SNI => For each application/site, using listener based rules, add a Host Rule handling Https, also each rule forwards to multiple target groups<p>
+ALB true Layer 7 LB, understands content type, custom headers, user location and app behavior to make decisions <p>
+ALB's Https always terminated on the ALB. no unbroken SSL from client to application. => new connection from ALB to Application. <p>
+ALB SSL cert installed on ALB if Https used <p>
+ALB can check application health<p>
+ALB supports Rule Conditions like "host-header", "http-header", path, IP, query string etc, that are processed in a priority order by a listener, and based on that action can be applied (forward, redirect, authenticate-cognito etc). Also a default rule catchall exists if nothing else matches<p>
+ALB we could have a Source IP Rule vs the usual Host Rule to identify if the request came from a corprorate IP and forward to other APP<p>
+NLB faster than ALB, no understanding of Http,Https (no headers, no cookies, no stickiness), poor health check (ICMP/TCP - not app aware), can have Static IP for whitelisting<p>
+NLB unbroken encryption Client to Instance using TCP Listeners. Used with PrivateLink to provide services to other VPCs<p>
 ##  [NEW] Session Stickiness (9:25)
 ##  [DEMO] Seeing Session Stickiness in Action (13:29)
 ##  ASG Refresher (16:12)
