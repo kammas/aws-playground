@@ -138,6 +138,10 @@
 ##  [NEW] Elastic Load Balancer Architecture (ELB) - PART2 (12:50)
 ##  [NEW] Session State (9:11)
 ##  ELB Evolution (4:10)
+ELB all three Load Balancers
+CLB for Http,Https and lower level. Not really layer 7.Lack Http protocol features. More expensive. 1 SSL per CLB. Do not use
+ALB for Http/S/Websocket. Support target group and rules
+NLB for TCP,TLC,UDP.. Support target group and rules
 ##  Application vs Network Load Balancers (ALB vs NLB) (16:26)
 ##  [NEW] Session Stickiness (9:25)
 ##  [DEMO] Seeing Session Stickiness in Action (13:29)
