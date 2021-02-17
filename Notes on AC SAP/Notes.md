@@ -1,11 +1,11 @@
-###0.INTRODUCTION & SCENARIO
-##    Public Introduction (4:41)
-##    Site Tools and Features (8:06)
-##    Finding and Using the Course Resources (12:29)
-##    AWS Exams (17:32)
-##    Course Scenario (13:40)
-##    [OPTIONAL] Connect with other students and your instructor (3:56)
-##    Course Upgrades (if you ever want to upgrade)
+# INTRODUCTION & SCENARIO
+##  Public Introduction (4:41)
+##  Site Tools and Features (8:06)
+##  Finding and Using the Course Resources (12:29)
+##  AWS Exams (17:32)
+##  Course Scenario (13:40)
+##  [OPTIONAL] Connect with other students and your instructor (3:56)
+##  Course Upgrades (if you ever want to upgrade)
 1.COURSE AWS ACCOUNTS
     Multi-factor Authentication (MFA) (8:25)
     [DEMO] Create and secure the master account (12:23)
