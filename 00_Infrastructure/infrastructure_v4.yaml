@@ -24,6 +24,32 @@ Parameters:
     Description: AMI for Bastion Host (default is latest AmaLinux2)
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'      
+  WebAsgMax:
+    AllowedPattern: ^([0-0]?[0-9]|10)$
+    ConstraintDescription: Must be a number between 1 and 30.
+    Default: 4
+    Description: Specifies the maximum number of EC2 instances in the Web Autoscaling Group.
+    Type: String
+  WebAsgMin:
+    AllowedPattern: ^([0-0]?[0-9]|10)$
+    ConstraintDescription: Must be a number between 0 and 10.
+    Default: 0
+    Description: Specifies the minimum number of EC2 instances in the Web Autoscaling Group.
+    Type: String
+  WebAsgDesired:
+    AllowedPattern: ^([0-0]?[0-9]|10)$
+    ConstraintDescription: Must be a number between 0 and 10.
+    Default: 2
+    Description: Specifies the Desired of EC2 instances in the Web Autoscaling Group.
+    Type: String 
+  route53DomainName: 
+    Type: String
+    Description: Apex domain name.
+    Default: test.cmcloudlab1025.info
+  route53HostedZoneId: 
+    Type: String
+    Default: Z0762302393MO2ZHS0OVW
+    Description: Hosted ZoneId.    
 Resources:
   # VPC1 Resources
   awsVPC1:
@@ -311,6 +337,215 @@ Resources:
         - !Ref InstanceSG
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
       VpcId: !Ref awsVPC1
+  SGWEB:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref awsVPC1
+      GroupDescription: Control access to WEB Instance(s)
+      SecurityGroupIngress: 
+        - Description: 'Allow HTTP IPv4 IN'
+          IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: '0.0.0.0/0'
+        - Description: 'Allow WWW IN FROM ALB'
+          IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          SourceSecurityGroupId: !Ref SGLoadBalancer
+  SGLoadBalancer:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref awsVPC1
+      GroupDescription: Control access to Load Balancer
+      SecurityGroupIngress: 
+        - Description: 'Allow HTTP IPv4 IN'
+          IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: '0.0.0.0/0'
+  EC2Role3:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+  WEBInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EC2Role3
+  WEBLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties: 
+      LaunchTemplateData: 
+        InstanceType: "t2.micro"
+        CreditSpecification:
+          CpuCredits: unlimited
+        ImageId: !Ref LatestAmiId
+        IamInstanceProfile: 
+          Name: !Ref WEBInstanceProfile
+        SecurityGroupIds: 
+          - !Ref SGWEB
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash -xe
+
+            # STEP 1 - Updates
+            yum -y update
+            
+            # STEP 2 - Begin Configuration
+            yum -y install httpd wget cowsay curl python3 pip3
+            amazon-linux-extras install -y php7.2
+            amazon-linux-extras install epel -y
+            yum install stress -y
+            pip3 install random-cat
+            systemctl enable httpd
+            systemctl start httpd
+
+            # STEP 2 - Custom Random Web Page
+            bgcolor=$(printf "%02x%02x%02x\n" $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256)))
+            instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+            wget -O /var/www/html/random.jpg "https://picsum.photos/200/300"
+            echo "<html><head></head><body style=\"background-color:#$bgcolor;\">" >> /var/www/html/index.html
+            echo "<center><h1>EC2: $instanceId</h1></center><br>" >> /var/www/html/index.html
+            echo "<center><img src=\"random.jpg\"></center>" >> /var/www/html/index.html
+            echo "</body></html>" >> /var/www/html/index.html
+
+            # Step 4 - permissions 
+            usermod -a -G apache ec2-user   
+            chown -R ec2-user:apache /var/www
+            chmod 2775 /var/www
+            find /var/www -type d -exec chmod 2775 {} \;
+            find /var/www -type f -exec chmod 0664 {} \;
+
+            # STEP 5 COWSAY
+            echo "#!/bin/sh" > /etc/update-motd.d/40-cow
+            echo 'cowsay "Amazon Linux 2 AMI - RandomImage"' > /etc/update-motd.d/40-cow
+            chmod 755 /etc/update-motd.d/40-cow
+            rm /etc/update-motd.d/30-banner
+            update-motd
+  ASG: 
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties: 
+      VPCZoneIdentifier:
+        - !Ref awsPublicSubnetA1
+        - !Ref awsPublicSubnetB1
+      LaunchTemplate:
+        LaunchTemplateId: !Ref WEBLaunchTemplate
+        Version: "1"
+      MaxSize: !Ref WebAsgMax
+      MinSize: !Ref WebAsgMin
+      DesiredCapacity: !Ref WebAsgDesired
+      Tags:
+        - Key: "Name"
+          Value: "ASGEC21"
+          PropagateAtLaunch: true
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 300
+      TargetGroupARNs:
+        - !Ref ALBTG
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      IpAddressType: "ipv4"
+      Scheme: "internet-facing"
+      SecurityGroups: 
+        - !Ref SGLoadBalancer
+      Subnets: 
+        - !Ref awsPublicSubnetA1
+        - !Ref awsPublicSubnetB1
+      Tags: 
+        - Key: Name
+          Value: !Join [ '', [ 'ALB-', !Ref 'AWS::StackName' ] ]
+      Type: "application"
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTG
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+  ALBTG:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /index.html
+      HealthCheckTimeoutSeconds: 5
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref awsVPC1
+      TargetGroupAttributes:
+        - Key: stickiness.enabled 
+          Value: false    
+  route53HealthCheckPrimary:
+    Type: AWS::Route53::HealthCheck
+    DependsOn: EC2A2
+    Properties: 
+      HealthCheckConfig:
+        FailureThreshold: 3
+        FullyQualifiedDomainName: !Ref route53DomainName
+        IPAddress: !GetAtt EC2A2.PublicIp
+        Port: 80
+        RequestInterval: 30
+        ResourcePath: '/'
+        Type: HTTP
+      HealthCheckTags:
+        - Key: 'Name'
+          Value: 'health-check-primary'
+  route53HealthCheckSecondary:
+    Type: AWS::Route53::HealthCheck
+    DependsOn: EC2B2
+    Properties: 
+      HealthCheckConfig:
+        FailureThreshold: 3
+        FullyQualifiedDomainName: !Ref route53DomainName
+        IPAddress: !GetAtt EC2B2.PublicIp
+        Port: 80
+        RequestInterval: 30
+        ResourcePath: '/'
+        Type: HTTP
+      HealthCheckTags:
+        - Key: 'Name'
+          Value: 'health-check-secondary'
+  route53RecordPrimary:
+    Type: AWS::Route53::RecordSet
+    Properties: 
+      Failover: 'PRIMARY'
+      HealthCheckId: !Ref route53HealthCheckPrimary
+      HostedZoneId: !Ref route53HostedZoneId
+      Name: !Ref route53DomainName
+      ResourceRecords: 
+        - !GetAtt EC2A2.PublicIp
+      SetIdentifier: 'recordset-primary'
+      TTL: '60'
+      Type: 'A'
+  route53RecordSecondary:
+    Type: AWS::Route53::RecordSet
+    Properties: 
+      Failover: 'SECONDARY'
+      HealthCheckId: !Ref route53HealthCheckSecondary
+      HostedZoneId: !Ref route53HostedZoneId
+      Name: !Ref route53DomainName
+      ResourceRecords: 
+        - !GetAtt EC2B2.PublicIp
+      SetIdentifier: 'recordset-secondary'
+      TTL: '60'
+      Type: 'A'                
+  ##Need also to add two A records primary/secondary on the HostedZone      
   # VPC2 Resources
   awsVPC2:
     Type: AWS::EC2::VPC
@@ -517,7 +752,7 @@ Resources:
           #!/bin/bash -xe
           yum -y update
           yum -y install httpd wget
-          sudo wget -O index.html https://pk-sharedmedia.s3.amazonaws.com/error.html -P /var/www/html
+          wget -O /var/www/html/index.html https://pk-sharedmedia.s3.amazonaws.com/error.html
           usermod -a -G apache ec2-user   
           chown -R ec2-user:apache /var/www
           chmod 2775 /var/www
@@ -563,7 +798,17 @@ Resources:
       Tier: Standard
       Description: SSM Parameter for CloudWatchAgent Config
       Value: "{\n\t\"agent\": {\n\t\t\"metrics_collection_interval\": 60,\n\t\t\"run_as_user\": \"root\"\n\t},\n\t\"logs\": {\n\t\t\"logs_collected\": {\n\t\t\t\"files\": {\n\t\t\t\t\"collect_list\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"file_path\": \"/var/log/secure\",\n\t\t\t\t\t\t\"log_group_name\": \"/var/log/secure\",\n\t\t\t\t\t\t\"log_stream_name\": \"{instance_id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"file_path\": \"/var/log/httpd/access_log\",\n\t\t\t\t\t\t\"log_group_name\": \"/var/log/httpd/access_log\",\n\t\t\t\t\t\t\"log_stream_name\": \"{instance_id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"file_path\": \"/var/log/httpd/error_log\",\n\t\t\t\t\t\t\"log_group_name\": \"/var/log/httpd/error_log\",\n\t\t\t\t\t\t\"log_stream_name\": \"{instance_id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t}\n\t},\n\t\"metrics\": {\n\t\t\"append_dimensions\": {\n\t\t\t\"AutoScalingGroupName\": \"${aws:AutoScalingGroupName}\",\n\t\t\t\"ImageId\": \"${aws:ImageId}\",\n\t\t\t\"InstanceId\": \"${aws:InstanceId}\",\n\t\t\t\"InstanceType\": \"${aws:InstanceType}\"\n\t\t},\n\t\t\"metrics_collected\": {\n\t\t\t\"collectd\": {\n\t\t\t\t\"metrics_aggregation_interval\": 60\n\t\t\t},\n\t\t\t\"cpu\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"cpu_usage_idle\",\n\t\t\t\t\t\"cpu_usage_iowait\",\n\t\t\t\t\t\"cpu_usage_user\",\n\t\t\t\t\t\"cpu_usage_system\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60,\n\t\t\t\t\"resources\": [\n\t\t\t\t\t\"*\"\n\t\t\t\t],\n\t\t\t\t\"totalcpu\": false\n\t\t\t},\n\t\t\t\"disk\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"used_percent\",\n\t\t\t\t\t\"inodes_free\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60,\n\t\t\t\t\"resources\": [\n\t\t\t\t\t\"*\"\n\t\t\t\t]\n\t\t\t},\n\t\t\t\"diskio\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"io_time\",\n\t\t\t\t\t\"write_bytes\",\n\t\t\t\t\t\"read_bytes\",\n\t\t\t\t\t\"writes\",\n\t\t\t\t\t\"reads\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60,\n\t\t\t\t\"resources\": [\n\t\t\t\t\t\"*\"\n\t\t\t\t]\n\t\t\t},\n\t\t\t\"mem\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"mem_used_percent\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60\n\t\t\t},\n\t\t\t\"netstat\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"tcp_established\",\n\t\t\t\t\t\"tcp_time_wait\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60\n\t\t\t},\n\t\t\t\"statsd\": {\n\t\t\t\t\"metrics_aggregation_interval\": 60,\n\t\t\t\t\"metrics_collection_interval\": 10,\n\t\t\t\t\"service_address\": \":8125\"\n\t\t\t},\n\t\t\t\"swap\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"swap_used_percent\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60\n\t\t\t}\n\t\t}\n\t}\n}"
-                 
+# OUTPUTS
+Outputs:
+  PUBLICIPEC2A2:
+    Description: EC2A2 Public IP
+    Value: !GetAtt EC2A2.PublicIp
+  PUBLICIPEC2B2:
+    Description: EC2B2 Public IP
+    Value: !GetAtt EC2B2.PublicIp  
+  ALBURL:
+    Description: The Load Balancer URL
+    Value: !Sub 'http://${ALB.DNSName}'                    
        
          
                   
