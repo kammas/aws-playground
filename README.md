@@ -16,4 +16,5 @@ Progressive Versions
 ![alt text](00_Infrastructure/aws-playground-infrastructure_v3.jpg "Infra")
 
 ### V4 (+2 Public EC2 with Route 53, one with index and one for failover, + 2ASG with ALB )
+(Requires a DNS/Hosting zone)
 ![alt text](00_Infrastructure/aws-playground-infrastructure_v4.jpg "Infra")
