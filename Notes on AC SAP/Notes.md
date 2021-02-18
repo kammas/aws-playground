@@ -89,7 +89,17 @@
 ##  [Refresher] DNS Record Types (13:25)
 ##  [Refresher] Route 53 Public Hosted Zones (10:26)
 ##  [Refresher] Route 53 Health Checks (12:04)
+Health checks are separate from records, but are used by records<p>
+Health checkers are global. TCP, HTTP,HTTPS, with String Matching (body of response checked - the first 5120 bytes of the response)<p>
+Types of checks a)Endpoint that i specify, b)CloudWatch Alarms, c)Checks of checks (overall health - multi factor - e.g. less than X resources healthy)<p>
 ##  [Refresher] R53 Routing Policies (15:09)
+Simple: Routing to a single resource. An IP is fetched from a single record which has 1-N values<p>
+Failover: Two records of the same name and type. A primary and secondary. Each record has a health check. Primary always returned if healthy. <p>
+Weighted: Multiple records of the same name in the hosted zone, each with a weight value (higher weight - higher probability to fetch record) 
+Useful for Load Balancing or testing new software versions<p>
+Latency-based: Multiple records with same name and type, specifying region of resource, R53 chooses resource from region with lowest latency <p>
+Geolocation: Multiple records with same name and type, specifying location DEFAULT/Continent/Country. Tries to find resource looking a match based on Country THEN Continent THEN Default. Helps fetching continent by location <p>
+Multi-value: Multiple records with same name + each health check. Returns all records that are healthy<p>
 ##  [**NEW**] Gateway Endpoint Refresher (11:41)
 ##  [**NEW**] Interface Endpoint Refresher (11:14)
 ##  VPC Endpoint Policies & Bucket Policies (12:11)
@@ -163,19 +173,20 @@ NLB faster than ALB, no understanding of Http,Https (no headers, no cookies, no 
 NLB unbroken encryption Client to Instance using TCP Listeners. Used with PrivateLink to provide services to other VPCs<p>
 ##  [NEW] Session Stickiness (9:25)
 ALB cookie duration 1s - 7 days. Backend instance will change if a)cookie expires b)instance fails. Needed when backend is stateful and want to use ELB. BAD - Uneven load.<p>
-Cookie AWSALB for ALB (AWSELB for CLB) held by client, locks session to 1 Backend Instance. Optimal is to store session data externally and not use stickiness <p>
+Cookie AWSALB for ALB (AWSELB for CLB) held by client, locks session to 1 Backend Instance. Optimal is to store session data externally and not use stickiness<p>
 ##  [DEMO] Seeing Session Stickiness in Action (13:29)
 ##  ASG Refresher (16:12)
+ASG provide Automatic Scaling and Self-Healing for EC2 using EITHER a Launch Configuration OR a Launch Template version. Min, Desired, Max sizes<p>
+Scaling Policy allows for dynamic Desired capacity based on metrics. a)Manual Scaling b)Scaled Scheduling (time based) c)Dynamic Scaling - c1)Simple, CPU>50%+1 CPU<30%-1 c2)Stepped, greater steps for quicker reactions 1 (e.g. +1 for 50%, +3 for 80%) c3)Target Tracking, +- based on specific target of metrics<p>
+Cooldown period: Time to wait after scaling action before proceeding to next, to reduce costs<p>
+ASG instances are added to or removed from a Target Group <p>
+ASG can use Load Balancer checks which are much richer than EC2 checks. Careful the check to be appropriate<p>
+ASG Scaling Processes: Launch - SUSPEND => No scale out, Terminate - SUSPEND => No scale in. RESUME scale in/out functional again <p>
+ASG options to "AddToLoadBalancer", "AlarmNotification" (accept CW notifications), "AZRebalance" (Balance Instances eveny across AZs), "HealthCheck" (instance health checks on/off), "ReplaceUnhealthy" (terminate and replace unhealthy), "ScheduledActions", "Standby" (to put them aside from ASG for a while, maintenance)<p>
+Free, Cool down large for cost effective, Smaller instances for granularity, ASG With ALB-> Elasticity<p>
 ##  ASG Lifecycle Hooks (5:24)
-##  [AdvancedDemo] Architecture Evolution - STAGE1 - PART1 (13:06)
-##  [AdvancedDemo] Architecture Evolution - STAGE1 - PART2 (11:03)
-##  [AdvancedDemo] Architecture Evolution - STAGE2 (12:41)
-##  [AdvancedDemo] Architecture Evolution - STAGE 3 (19:15)
-##  [AdvancedDemo] Architecture Evolution - STAGE 4 (18:28)
-##  [AdvancedDemo] Architecture Evolution - STAGE 5 - PART1 (11:39)
-##  [AdvancedDemo] Architecture Evolution - STAGE 5 - PART2 (14:48)
-##  [AdvancedDemo] Architecture Evolution - STAGE 6 (9:54)
-##  [AdvancedDemo] Architecture Evolution - STAGE 7 (6:12)
+ASG Lifecycle Hooks allows to configure custom actions that will take place on ASG actions (events launch/terminate transitions)<p>
+Adding a Lifecycle Hook on Launch or Terminate we can add two more intermediate states that will wait for X time OR until we run the "CompleteLifecycleAction" before the "InService" or "Terminate" state. This is accomplished with SNS, SQS or EventBridge receiving notifications (requires also a role and Notification metadata in lifecycle Hook edited accordingly)<p>
 ##  EC2 Placement Groups (14:29)
 ##  SECTION QUIZ - COMPUTE, SCALING & LOAD BALANCING
 # MONITORING, LOGGING & COST MANAGEMENT
