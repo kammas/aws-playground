@@ -19,7 +19,7 @@ Progressive Versions
 (Requires a DNS/Hosting zone)
 ![alt text](00_Infrastructure/aws-playground-infrastructure_v4.jpg "Infra")
 
-### V4 (+Gateway Endpoint, S3 private access)
+### V5 (+Gateway Endpoint, S3 private access, Interface Endopoint, SNS private access)
 ![alt text](00_Infrastructure/aws-playground-infrastructure_v5.jpg "Infra")
 
 
