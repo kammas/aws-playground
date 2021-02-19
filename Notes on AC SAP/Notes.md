@@ -101,8 +101,21 @@ Latency-based: Multiple records with same name and type, specifying region of re
 Geolocation: Multiple records with same name and type, specifying location DEFAULT/Continent/Country. Tries to find resource looking a match based on Country THEN Continent THEN Default. Helps fetching continent by location <p>
 Multi-value: Multiple records with same name + each health check. Returns all records that are healthy<p>
 ##  [**NEW**] Gateway Endpoint Refresher (11:41)
+Provide private access to S3 and DynamoDB (without them to be public accessible). Per service , per region (region specific) - HA
+Prefix list added to route table. Endpoint policy can control access of the endpoint. 
+Use cases: a)Access to a private VPC to S3 and DynamoDB without internet, b)Allow access to S3 from gateway endpoint ONLY (not from other subnets)
+Endpoint Policy just controlls restrictions (like SCP)
 ##  [**NEW**] Interface Endpoint Refresher (11:14)
+Provide private access to ALL EXCEPT S3 and DynamoDB (without them to be public accessible). Per subnet ENI added - NOT HA
+Endpoint provides NEW service endpoint DNS for the service REGIONAL and ZONAL. Endpoint policy can control access of the endpoint.
+Support Security Groups controlling network access of Endpoints. For TCP and IPv4 ONLY. 
+Uses PrivateLink (technology allowing AWS or 3rd Party services injected to my VPC with ENI)
+Without Private DNS Private Instances go through ENI and Public ones through IGW
+With Private DNS (default) the default DNS is overriden and Public and Private instances go through ENI
+Endpoint Policy just controlls restrictions (like SCP)
 ##  VPC Endpoint Policies & Bucket Policies (12:11)
+Endpoint Policy just controlls restrictions (like SCP)
+Bucket Policy can allow access to specific VPCs
 ##  [DEMO] Private S3 Buckets - PART1 - SETUP (8:39)
 ##  [DEMO] Private S3 Buckets - PART2 (17:19)
 ##  Advanced VPC DNS & DNS Endpoints (15:42)
