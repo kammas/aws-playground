@@ -490,8 +490,18 @@ Resources:
       VpcId: !Ref awsVPC1
       TargetGroupAttributes:
         - Key: stickiness.enabled 
-          Value: false    
-  ##Need also to add two A records primary/secondary on the HostedZone      
+          Value: false
+  PrivateBucket1: 
+    Type: AWS::S3::Bucket
+  PrivateBucket1Policy: 
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: !Ref PrivateBucket1
+      PolicyDocument: 
+        Statement: 
+          Principal: '*'
+          Action: '*'
+          Effect: 'Allow'
   # VPC2 Resources
   awsVPC2:
     Type: AWS::EC2::VPC
@@ -1189,7 +1199,17 @@ Outputs:
     Value: !GetAtt EC2B2.PublicIp  
   ALBURL:
     Description: The Load Balancer URL
-    Value: !Sub 'http://${ALB.DNSName}'                    
+    Value: !Sub 'http://${ALB.DNSName}'     
+  PRIVATEBUCKET1URL:
+    Value: !GetAtt PrivateBucket1.DomainName
+    Description: URL of the private Bucket   
+  PRIVATEBUCKET1NAME:
+    Value: !Ref: PrivateBucket1
+  PRIVATEBUCKET1ARN:
+    Value: !GetAtt: PrivateBucket1.Arn
+  PRIVATEBUCKET1NAMEJOINED:
+    Value: !Join [" ", ["BeforeBucketName",!Ref : PrivateBucket1]]    
+
        
          
                   

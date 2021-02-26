@@ -101,21 +101,21 @@ Latency-based: Multiple records with same name and type, specifying region of re
 Geolocation: Multiple records with same name and type, specifying location DEFAULT/Continent/Country. Tries to find resource looking a match based on Country THEN Continent THEN Default. Helps fetching continent by location <p>
 Multi-value: Multiple records with same name + each health check. Returns all records that are healthy<p>
 ##  [**NEW**] Gateway Endpoint Refresher (11:41)
-Provide private access to S3 and DynamoDB (without them to be public accessible). Per service , per region (region specific) - HA
-Prefix list added to route table. Endpoint policy can control access of the endpoint. 
-Use cases: a)Access to a private VPC to S3 and DynamoDB without internet, b)Allow access to S3 from gateway endpoint ONLY (not from other subnets)
-Endpoint Policy just controlls restrictions (like SCP)
+Provide private access to S3 and DynamoDB (without them to be public accessible). Per service , per region (region specific) - HA<p>
+Prefix list added to route table. Endpoint policy can control access of the endpoint. <p>
+Use cases: a)Access to a private VPC to S3 and DynamoDB without internet, b)Allow access to S3 from gateway endpoint ONLY (not from other subnets)<p>
+Endpoint Policy just controlls restrictions (like SCP)<p>
 ##  [**NEW**] Interface Endpoint Refresher (11:14)
-Provide private access to ALL EXCEPT S3 and DynamoDB (without them to be public accessible). Per subnet ENI added - NOT HA
-Endpoint provides NEW service endpoint DNS for the service REGIONAL and ZONAL. Endpoint policy can control access of the endpoint.
-Support Security Groups controlling network access of Endpoints. For TCP and IPv4 ONLY. 
-Uses PrivateLink (technology allowing AWS or 3rd Party services injected to my VPC with ENI)
-Without Private DNS Private Instances go through ENI and Public ones through IGW
-With Private DNS (default) the default DNS is overriden and Public and Private instances go through ENI
-Endpoint Policy just controlls restrictions (like SCP)
+Provide private access to ALL EXCEPT S3 and DynamoDB (without them to be public accessible). Per subnet ENI added - NOT HA<p>
+Endpoint provides NEW service endpoint DNS for the service REGIONAL and ZONAL. Endpoint policy can control access of the endpoint.<p>
+Support Security Groups controlling network access of Endpoints. For TCP and IPv4 ONLY. <p>
+Uses PrivateLink (technology allowing AWS or 3rd Party services injected to my VPC with ENI)<p>
+Without Private DNS Private Instances go through ENI and Public ones through IGW<p>
+With Private DNS (default) the default DNS is overriden and Public and Private instances go through ENI<p>
+Endpoint Policy just controlls restrictions (like SCP)<p>
 ##  VPC Endpoint Policies & Bucket Policies (12:11)
-Endpoint Policy just controlls restrictions (like SCP)
-Bucket Policy can allow access to specific VPCs
+Endpoint Policy just controlls restrictions (like SCP)<p>
+Bucket Policy can allow access to specific VPCs<p>
 ##  [DEMO] Private S3 Buckets - PART1 - SETUP (8:39)
 ##  [DEMO] Private S3 Buckets - PART2 (17:19)
 ##  Advanced VPC DNS & DNS Endpoints (15:42)
@@ -213,12 +213,36 @@ Adding a Lifecycle Hook on Launch or Terminate we can add two more intermediate 
 ##  Trusted Advisor (8:35)
 ##  Section Quiz - Logging, Monitoring & Cost Management
 # DATABASES
+Relational / Key-Value / Document / In Memory / Graph / Time Series / Ledger
 ##  [Refresher] RDS Architecture (9:37)
+Oracle/Postgre/SQL Server/MariaDB/MySQL
+Supports Read Replicas / Automated Backups / Scalable Storage and Compute / Multi AZ for failover
+Cloudwatch reads metrics from hypervisor (so limited data) - Measures Freeable memory (which includes memory that could be in use in buffers and cache)
+Enhanced Monitoring retrieves data from Agent on the instance - Measures Free Memory+++ (actual free memory) or swap
+Event Bridge > CloudWatch Events. 
+Instance statuses failed, restore-error,incompatible can result in severe outage
+Statuses like incopatible and failed are not billable
+Logs depend on config parameters: Error for erros, general for SQL user log, slow query for queries that take long, audit for queries, 
+MySQL , Maria DB log which statements are logged and slow queries
+Postgre logs DML,DDL, or BOth and Slow queries and config of retention period
+RDS: We can export the logs to CloudWatch logs for security investigations, performance investigation etc
+RDS -> CW logs -> LogGroup -> Filter Pattern -> Custom Metric -> S3 -> Athena etc
+Error of a user when creating a service-linked role -> may be missing iam:CreateServiceLinkedRole perimission
+AmazonRDSReadOnlyAccess for reading
+AmazonRDSFullAccess for full access
+Supports External Authentication Kerberos and MicrosoftAD (NOT for MariaDB)
+IAM auth supported during creation or later
+But has limitations (MySQL 200 connections/sec / Postgre needs SSL enabled), accomplished by generation of token expiring within 15 minutes
+Secrets Manager can rotate passwords
+RDS CA-2019 is used for SSL
+SSL can be forced for Postgre to all users
 ##  [Refresher] RDS Multi-AZ (8:53)
 ##  [Refresher] RDS Backups and Restores (13:25)
 ##  [Refresher] RDS Read-Replicas (7:52)
 ##  RDS Data Security (7:03)
 ##  [Refresher] Aurora Architecture (13:02)
+MySQL/Postgre
+Scalable Reads / Automated Backups / Auto Scaling Cluster / Multi master support
 ##  [Refresher] Aurora Serverless Architecture (9:52)
 ##  [Refresher] Multi-master writes (7:51)
 ##  [Refresher] DynamoDB Architecture Basics (11:14)
@@ -309,6 +333,13 @@ Adding a Lifecycle Hook on Launch or Terminate we can add two more intermediate 
 ##  SECTION QUIZ - MIGRATIONS & EXTENSIONS
 # DEPLOYMENT & MANAGEMENT
 ##  [Refresher] CloudFormation Refresher (10:55)
+Importing Stacks and not hardcoding ARN ensures a deletion of an imported stack does not leave the stack orphan. Prefer it over hardcoded ARN
+cfn-init (try to reach specific end states - unlike bootstrap that runs script)
+cfn-signal can provide accurately if the creation has indeed been completed
+cfn-hup to monitor for N time after cfn-init, for changes/actions
+logs of cfn-init and similar are under var/log on Ubuntu
+AWS SAM, i can write on YAML/JSON and also test locally. Supports native transformation
+AWS CDK, i can write on javascript/typescript/python/java/.net. Reusability. Supports native transformation
 ##  CloudFormation Custom Resources-PART1-THEORY (11:43)
 ##  CloudFormation Custom Resources-PART2-DEMO (11:35)
 ##  CloudFormation Nested Stacks (14:17)

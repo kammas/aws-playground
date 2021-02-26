@@ -491,7 +491,6 @@ Resources:
       TargetGroupAttributes:
         - Key: stickiness.enabled 
           Value: false    
-  ##Need also to add two A records primary/secondary on the HostedZone      
   # VPC2 Resources
   awsVPC2:
     Type: AWS::EC2::VPC
