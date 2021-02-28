@@ -312,7 +312,14 @@ Query is done on a specific PARTITION and uses PK, PK+SK, or secodary indexes<p>
 PutItem overwrites the whole item (all attributes) with the new version being passed while UpdateItem will only Update the passed attributes<p>
 DYnamoDB allows both Replication and Sharding<p>
 Allows Batch Operations<p>
- 
+Highly advised to offload large attribute values to S3  
+I can use Atomic transactions using TransactWriteItems or TransactGet items and write or read ALL TOGETHER. Up to 25 items or 4MB, within same Region and same account<p>
+TTL helps automatically clean items that are useless after X time (e.g. sessions). Data are actually deleted after 48hrs with eventually consistency, may need to add filter expression in queries to not fetch these items, TTL attribute should be number in epoch time <p>
+Encryption in transit uses https, all table data at rest also encyrpted including DAX clusters using CMK owned by AWS (default) or managed by AWS (KMS option) - better for auditing to use KMS <p>
+Partition Key should not be encrypted to be discoverable
+If a user does not have access to the KMS key he can't decrypt the content of the attribute
+I can encrypt data before sending them to DynamoDB, using the KMS key
+To allow an EC2 instance to connect with DynamoDB without internet we are using a VPC endpoint (Gateway) - will modify route table 
 ##  [Refresher] DynamoDB Operations, Consistency and Performance - PART1 (13:06)
 On demand capacity (expensive-flexible / good for new tables with unknown workload / unpredictable traffic / pay as you go)<p>
 Provisioned capacity (cheap-not flexible / good for predictable traffic / capacity requirements can be forecasted)<p>
@@ -334,7 +341,19 @@ Global Secondary Index can be created anytime. Partition key can be anything and
 Projection expressions help us defining what we want to be returned (to reduce consumption)<p>
 ##  [Refresher] DynamoDB Streams and Triggers (8:48)
 ##  [Refresher] DynamoDB Accelerator (DAX) (10:58)
+Dax can improve performance up to 10x, reduces request times from millis to micros<p>
+NO NEED for developer changes!!<p>
+DAX is provisioned in multiple AZs for HA. Automatically fails over and promotes new primary node<p>
+Supports up to 10 nodes per cluster (1 primary and 9 replicas)<p>
+Supports everything except control plane APIs (createTable,DeleteTable etc)<p>
+DAX cluster Requires an IAM service role to have access to DynamoDB and also association to a subnet group<p>
+On miss cache, an eventually consistent get item operation on DynamoDB occurs. Does not support eventually consistent reads<p>
 ##  [Refresher] DynamoDB Global Tables (5:20)
+To setup global tables for a table 
+1. it has to be EMPTY
+1. I need to enable streams (to replicate)
+1. add supported region
+Last writer wins
 ##  ACG On Migration of Mysql to Dynamo DB using DMS
 To do so i need to 
 1. Create a Replication Instance on DMS
