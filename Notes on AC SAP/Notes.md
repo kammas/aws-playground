@@ -213,42 +213,123 @@ Adding a Lifecycle Hook on Launch or Terminate we can add two more intermediate 
 ##  Trusted Advisor (8:35)
 ##  Section Quiz - Logging, Monitoring & Cost Management
 # DATABASES
-Relational / Key-Value / Document / In Memory / Graph / Time Series / Ledger
+Relational / Key-Value / Document / In Memory / Graph / Time Series / Ledger<p>
 ##  [Refresher] RDS Architecture (9:37)
-Oracle/Postgre/SQL Server/MariaDB/MySQL
-Supports Read Replicas / Automated Backups / Scalable Storage and Compute / Multi AZ for failover
-Cloudwatch reads metrics from hypervisor (so limited data) - Measures Freeable memory (which includes memory that could be in use in buffers and cache)
-Enhanced Monitoring retrieves data from Agent on the instance - Measures Free Memory+++ (actual free memory) or swap
-Event Bridge > CloudWatch Events. 
-Instance statuses failed, restore-error,incompatible can result in severe outage
-Statuses like incopatible and failed are not billable
-Logs depend on config parameters: Error for erros, general for SQL user log, slow query for queries that take long, audit for queries, 
-MySQL , Maria DB log which statements are logged and slow queries
-Postgre logs DML,DDL, or BOth and Slow queries and config of retention period
-RDS: We can export the logs to CloudWatch logs for security investigations, performance investigation etc
-RDS -> CW logs -> LogGroup -> Filter Pattern -> Custom Metric -> S3 -> Athena etc
-Error of a user when creating a service-linked role -> may be missing iam:CreateServiceLinkedRole perimission
-AmazonRDSReadOnlyAccess for reading
-AmazonRDSFullAccess for full access
-Supports External Authentication Kerberos and MicrosoftAD (NOT for MariaDB)
-IAM auth supported during creation or later
-But has limitations (MySQL 200 connections/sec / Postgre needs SSL enabled), accomplished by generation of token expiring within 15 minutes
-Secrets Manager can rotate passwords
-RDS CA-2019 is used for SSL
-SSL can be forced for Postgre to all users
+Oracle/Postgre/SQL Server/MariaDB/MySQL<p>
+Supports Read Replicas / Automated Backups / Scalable Storage and Compute / Multi AZ for failover<p>
+Cloudwatch reads metrics from hypervisor (so limited data) - Measures Freeable memory (which includes memory that could be in use in buffers and cache)<p>
+Enhanced Monitoring retrieves data from Agent on the instance - Measures Free Memory+++ (actual free memory) or swap<p>
+Event Bridge > CloudWatch Events. <p>
+Instance statuses failed, restore-error,incompatible can result in severe outage<p>
+Statuses like incopatible and failed are not billable<p>
+Logs depend on config parameters: Error for erros, general for SQL user log, slow query for queries that take long, audit for queries, <p>
+MySQL , Maria DB log which statements are logged and slow queries<p>
+Postgre logs DML,DDL, or BOth and Slow queries and config of retention period<p>
+RDS: We can export the logs to CloudWatch logs for security investigations, performance investigation etc<p>
+RDS -> CW logs -> LogGroup -> Filter Pattern -> Custom Metric -> S3 -> Athena etc<p>
+Error of a user when creating a service-linked role -> may be missing iam:CreateServiceLinkedRole perimission<p>
+AmazonRDSReadOnlyAccess for reading , AmazonRDSFullAccess for full access<p>
+Supports External Authentication Kerberos and MicrosoftAD (NOT for MariaDB)<p>
+IAM auth supported during creation or later<p>
+But has limitations (MySQL 200 connections/sec / Postgre needs SSL enabled), accomplished by generation of token expiring within 15 minutes<p>
+Secrets Manager can rotate passwords<p>
+RDS CA-2019 is used for SSL<p>
+SSL can be forced for Postgre to all users<p>
+DB Subnet groups need to have either ALL private or ALL public subnets<p>
+VPC can be changed if we modify the DB subnet group. New Security group will also be used (restart takes place)<p>
+To change storage, we trigger the instance to a storage-optiization status. This can't change for 6 hours. Also increase should be minimum 10% upwards. Reducing is harder (with DMS or export to new)<p>
+OUTAGE:a)Same AZ Region Changing Storage Type, b)DB Engine Maintenance change of Major Version upgrade (except MS SQL Server)<p>
+NO OUTAGE: a)Converting from 1AZ to Multi AZ<p>
+Best Practices for RDS: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_BestPractices.html<p>
+Static parameters require restart while Dynamic apply immdediately.<p>
+Parameter Groups are the main configuration. Option groups are special configuration and VPC specific<p>
+Persistent option of Option Group can be modified<p>
+Permanent option of Option Group can't be modified<p>
+Changing Parameter Group needs reboot<p>
+Maintenance: <p>
+a)Required - some time will be applied eventually  (security,availablities) - multi az reduces time to failover time<p>
+b)Available - option not mandatory<p>
+c)Next Window - schedule for next window (can be deferred)<p>
+d)In progress - can't be stopped till finishes<p>
+Maintenance window defined by me or random 30-minute in an 8 hour time block, which varies per region, in UTC time<p>
+Hardware maintenance shown only on Dashboard<p>
+Troubleshooting: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Troubleshooting.html<p>
+a)Issue: Changes not taking effect -> Symptom: Parameter Group is in "pending-reboot" state or static parameter changed -> Fix: reboot by myself or maintenance rebooting is needed<p>
+b) Issue: Storage full  -> Symptom: Users complain/Console showing error/e.g in 6 hours needed more storage than auto scaled previously  -> Fix: ModifyDBInstance + check reason  <p>
+c) Issue: Replication stopped -> Symptom: Complaint stale data / Problem on migration / Errors in logs  -> Fix: e.g. match parameter group configuration (network size may vary) / Ensure read_only on replica / replication supported on InnoDB only <p>
+d) Issue: Insufficient Capacity Error -> Symptom: Unable to create or update DB  -> Fix: Try different size, AZ or at another time <p>
+e) Issue: Too many connetcions -> Symptom: Some connect some not  -> Fix: Increase connections / check reason <p>
+On demand pricing , calculated by second. For unpredictable load<p>
+Reserved Instance pricing, one-to-three year purchase. For predictable load<p>
+Backup storage 1:1 is free<p>
+Data Transfer across regions is NOT free and EC2-RDS across AZ is NOT FREE<p>
+Data transfer Across AZ for Multi AZ and replication is Free<p>
+Oracle is the only that has BYOL (bring your own license)<p>
+Rebooting a Multi AZ DB, with Failover, swaps primary and failover instances (has 30 sec downtime)<p>
+Creating a RR on an RDS adds an asynch replica instance, (has no downtime - takes 9 minutes)<p>
+Promote RR from replica to primary (no downtime/lost data ONLY ON MySQL and Maria DB  - Other DBs lose data - takes 9 minutes) - Need to change DNS from the Private Route 53 DNS CNAME<p>
+Working with RR - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html<p>
+AWS Provides Managed Database Instances (even though it is called DBaaS it is not 100% accurate) - convenience to not handle EC2 instances<p>
 ##  [Refresher] RDS Multi-AZ (8:53)
+MultiAZ is same Region only, 60-120 failover, does SYNCHRONOUS replication, can occur in several cases<p>
 ##  [Refresher] RDS Backups and Restores (13:25)
+Automatic Backups and Manual Snapshots are stored in S3 managed buckets<p>
+for single AZ they are done on the primary, on multi AZ from standby<p>
+First snapshot is full then incremental. Manual snapshots need to be deleted manually. Do not expire<p>
+GOOD RPO BAD RTO
 ##  [Refresher] RDS Read-Replicas (7:52)
+Performance and Availability benefits<p>
+RDS Read Replicas can be added to an RDS Instance - 5 direct per primary instance.<p>
+They can be in the same region, or cross-region replicas.<p>
+They provide read performance scaling for the instance, but also offer low RTO recovery for any instance failure issues<p>
+N.B they don't help with data corruption as the corruption will be replicated to the RR.<p>
+GOOD RTO BEST RPO But can have corrupt data replicated<p>
+RR is Read only until promoted (irreversible)<p>
+Promote RR to Primary ONLY on failure<p>
 ##  RDS Data Security (7:03)
+Supported EBS volumes encrypted by KMS, with CMS or AWS key<p>
+MSSQL and Oracle support TDE encryption (Engine doing the encryption - not just aws). Oracle uses CloudHSM<p>
+When KMS is used, DEK (Data Encryption Keys) are generated by KMS and hosted on hosts. These are used to encrypt/decrypted data without the DB knowing it<p>
+IAM authentication is supported: 1)Create RDS Local DB account 2)Configure to use AWS auth token 3)Policy attached to Users or roles mapping IAM identity to local RDS user 4)IAM genearate-db-auth-token valid for 15 minutes 5)token is used=> login as the user. THIS IS AUTHENTICATION ONLY. AUTHORIZATION DONE BY RDS Instance<p>
+
 ##  [Refresher] Aurora Architecture (13:02)
-MySQL/Postgre
-Scalable Reads / Automated Backups / Auto Scaling Cluster / Multi master support
+MySQL/Postgre<p>
+Scalable Reads / Automated Backups / Auto Scaling Cluster / Multi master support<p>
 ##  [Refresher] Aurora Serverless Architecture (9:52)
 ##  [Refresher] Multi-master writes (7:51)
 ##  [Refresher] DynamoDB Architecture Basics (11:14)
+DynamoDB stores data in partitions, ideally i should make tables with a partition key of large number distinct values
+Data after hash function are stored in specific partition (based on hashed partition key) and DynamoDB will search later on using similar hash on the specific partition
+Each Partition can hold up to 10GB of data, supporting up to 3000 read capacity and 1000 write capacity
+Hashing is done with consistent hashing. Key is hashed (Mark->1633428562) -> hash key mod N (e.g. 52) -> find first node where it is >=52 (clockwise)
+1 RCU supports 1 Strongly Consistent Read or 2 Eventually Consistent Reads
+Paxos protocol (for resolving consensus in the network)  identifies the leader storage node
+On eventual consistency a random node may be used which may not had the time to synch the data
+Scan Filtering reads everything of a TABLE and then throws away (slow and not using indexes) - it is better using queries and indexes
+Scan default eventuallyConsistent but can become strong consistent with ConsistentRead parameter
+Results are no more than 1Mb, if more we should use pagination
+Query is done on a specific PARTITION and uses PK, PK+SK, or secodary indexes
+PutItem overwrites the whole item (all attributes) with the new version being passed while UpdateItem will only Update the passed attributes
+DYnamoDB allows both Replication and Sharding
+Allows Batch Operations
+ 
 ##  [Refresher] DynamoDB Operations, Consistency and Performance - PART1 (13:06)
+On demand capacity (expensive-flexible / good for new tables with unknown workload / unpredictable traffic / pay as you go)
+Provisioned capacity (cheap-not flexible / good for predictable traffic / capacity requirements can be forecasted)
+Switch between modes once per 24 hrs
+ARN is Region/Account/Table Name specific
+Table contains Items (rows). Each item has attributes
+Items are limited to 400Kb
+Binary should be converted to Base64, support number, string,binary,boolean,null,List Document, Map Document, Set of String/number/Binary
+Table name unique for the same Account/Region 
 ##  [Refresher] DynamoDB Operations, Consistency and Performance - PART2 (11:24)
+Dynamo DB supports Recovery Point in time for the last 35 days
+I can inititate backups like RDS Snapshots
+Metrics like RWCapacityUnits / ReadThrottleEvents / SuccesfulRequestLatency / SystemErrors / ThrottledRequests / UserErrors / WriteThrottleErrors
+boto3 and similar SDKs support exponential backoff retries when we have Read or Write throttle events
+exponential backoff retries is a must on Batch Operations / unprocessed items should be retried
 ##  [Refresher] DynamoDB Indexes (LSI and GSI) (12:32)
+Local Secondary Index must be created ONLY on creation of table. Has the same Partition Key as the table but different Sort key
 ##  [Refresher] DynamoDB Streams and Triggers (8:48)
 ##  [Refresher] DynamoDB Accelerator (DAX) (10:58)
 ##  [Refresher] DynamoDB Global Tables (5:20)
