@@ -298,41 +298,55 @@ Scalable Reads / Automated Backups / Auto Scaling Cluster / Multi master support
 ##  [Refresher] Aurora Serverless Architecture (9:52)
 ##  [Refresher] Multi-master writes (7:51)
 ##  [Refresher] DynamoDB Architecture Basics (11:14)
-DynamoDB stores data in partitions, ideally i should make tables with a partition key of large number distinct values
-Data after hash function are stored in specific partition (based on hashed partition key) and DynamoDB will search later on using similar hash on the specific partition
-Each Partition can hold up to 10GB of data, supporting up to 3000 read capacity and 1000 write capacity
-Hashing is done with consistent hashing. Key is hashed (Mark->1633428562) -> hash key mod N (e.g. 52) -> find first node where it is >=52 (clockwise)
-1 RCU supports 1 Strongly Consistent Read or 2 Eventually Consistent Reads
-Paxos protocol (for resolving consensus in the network)  identifies the leader storage node
-On eventual consistency a random node may be used which may not had the time to synch the data
-Scan Filtering reads everything of a TABLE and then throws away (slow and not using indexes) - it is better using queries and indexes
-Scan default eventuallyConsistent but can become strong consistent with ConsistentRead parameter
-Results are no more than 1Mb, if more we should use pagination
-Query is done on a specific PARTITION and uses PK, PK+SK, or secodary indexes
-PutItem overwrites the whole item (all attributes) with the new version being passed while UpdateItem will only Update the passed attributes
-DYnamoDB allows both Replication and Sharding
-Allows Batch Operations
+DynamoDB stores data in partitions, ideally i should make tables with a partition key of large number distinct values<p>
+Data after hash function are stored in specific partition (based on hashed partition key) and DynamoDB will search later on using similar hash on the specific partition<p>
+Each Partition can hold up to 10GB of data, supporting up to 3000 read capacity and 1000 write capacity<p>
+Hashing is done with consistent hashing. Key is hashed (Mark->1633428562) -> hash key mod N (e.g. 52) -> find first node where it is >=52 (clockwise)<p>
+1 RCU supports 1 Strongly Consistent Read or 2 Eventually Consistent Reads<p>
+Paxos protocol (for resolving consensus in the network)  identifies the leader storage node<p>
+On eventual consistency a random node may be used which may not had the time to synch the data<p>
+Scan Filtering reads everything of a TABLE and then throws away (slow and not using indexes) - it is better using queries and indexes<p>
+Scan default eventuallyConsistent but can become strong consistent with ConsistentRead parameter<p>
+Results are no more than 1Mb, if more we should use pagination<p>
+Query is done on a specific PARTITION and uses PK, PK+SK, or secodary indexes<p>
+PutItem overwrites the whole item (all attributes) with the new version being passed while UpdateItem will only Update the passed attributes<p>
+DYnamoDB allows both Replication and Sharding<p>
+Allows Batch Operations<p>
  
 ##  [Refresher] DynamoDB Operations, Consistency and Performance - PART1 (13:06)
-On demand capacity (expensive-flexible / good for new tables with unknown workload / unpredictable traffic / pay as you go)
-Provisioned capacity (cheap-not flexible / good for predictable traffic / capacity requirements can be forecasted)
-Switch between modes once per 24 hrs
-ARN is Region/Account/Table Name specific
-Table contains Items (rows). Each item has attributes
-Items are limited to 400Kb
-Binary should be converted to Base64, support number, string,binary,boolean,null,List Document, Map Document, Set of String/number/Binary
-Table name unique for the same Account/Region 
+On demand capacity (expensive-flexible / good for new tables with unknown workload / unpredictable traffic / pay as you go)<p>
+Provisioned capacity (cheap-not flexible / good for predictable traffic / capacity requirements can be forecasted)<p>
+Switch between modes once per 24 hrs<p>
+ARN is Region/Account/Table Name specific<p>
+Table contains Items (rows). Each item has attributes<p>
+Items are limited to 400Kb<p>
+Binary should be converted to Base64, support number, string,binary,boolean,null,List Document, Map Document, Set of String/number/Binary<p>
+Table name unique for the same Account/Region <p>
 ##  [Refresher] DynamoDB Operations, Consistency and Performance - PART2 (11:24)
-Dynamo DB supports Recovery Point in time for the last 35 days
-I can inititate backups like RDS Snapshots
-Metrics like RWCapacityUnits / ReadThrottleEvents / SuccesfulRequestLatency / SystemErrors / ThrottledRequests / UserErrors / WriteThrottleErrors
-boto3 and similar SDKs support exponential backoff retries when we have Read or Write throttle events
-exponential backoff retries is a must on Batch Operations / unprocessed items should be retried
+Dynamo DB supports Recovery Point in time for the last 35 days<p>
+I can inititate backups like RDS Snapshots<p>
+Metrics like RWCapacityUnits / ReadThrottleEvents / SuccesfulRequestLatency / SystemErrors / ThrottledRequests / UserErrors / WriteThrottleErrors<p>
+boto3 and similar SDKs support exponential backoff retries when we have Read or Write throttle events<p>
+exponential backoff retries is a must on Batch Operations / unprocessed items should be retried<p>
 ##  [Refresher] DynamoDB Indexes (LSI and GSI) (12:32)
-Local Secondary Index must be created ONLY on creation of table. Has the same Partition Key as the table but different Sort key
+Local Secondary Index must be created ONLY on creation of table. Has the same Partition Key as the table but different Sort key. Shares the RCU and WCU as the table<p>
+Global Secondary Index can be created anytime. Partition key can be anything and sort key is optional. Uses its own RCU and WCU. I can choose the attributes (columns) that will be projected (fetched) to reduce capacity to minimum. They are Sparse by default (fetching items non-null)<p>
+Projection expressions help us defining what we want to be returned (to reduce consumption)<p>
 ##  [Refresher] DynamoDB Streams and Triggers (8:48)
 ##  [Refresher] DynamoDB Accelerator (DAX) (10:58)
 ##  [Refresher] DynamoDB Global Tables (5:20)
+##  ACG On Migration of Mysql to Dynamo DB using DMS
+To do so i need to 
+1. Create a Replication Instance on DMS
+1. Choose source endpoint for source DB (MySql)
+1. Create IAM role to allow data to be added to DynamoDB (service that will use this role==DMS, attach policy )
+1. find the arn of the role
+1. Create target endpoint
+1. Create database migration task in DMS
+1. Choose if it should 
+    * migrate existing data
+    * migrate existing data and replicate
+    * replicate changes only  
 ##  AWS Elasticsearch (7:24)
 ##  [Refresher] Athena (8:52)
 ##  [DEMO] Athena - Part 1 (14:01)
