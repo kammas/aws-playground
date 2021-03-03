@@ -226,19 +226,44 @@ N Dimensions - M Metrics<p>
 ##  CloudWatch Logs Refresher (14:00)
 We can publish multiple logs to Cloudwatch (e.g for mysql mysql error log, slow query log, general log) or any other log, for cloudwatch to ingest them, on public AWS<p>
 Also we can subscribe services to Cloudwatch events to trigger further actions<p>
-Cloudwatch logs are sent to the Region they were generated otherwise us-east-1 if service is global
-**Log stream** is a sequence of Log Events that share the same source
-**Log Group** is a group of Log Streams that share the same retention,monitoring and access control settings
-**Metric Filter** can keep looking for specific pattern to result in a **Metric** that can generate alarm, which can trigger events
-Exporting logs from Cloudwatch to S3 can take up to 12 hours (not real time) and the encryption will be done wih SSE-S3
-**Subscription Filters** can be used to trigger lambda function based on incoming logs from log groups, or merge data in Kinesis Data Stream or other solutions
-For near-realtime storage of logs Kinesis Firehose can be used as the destination of Subscription Filters, and for realtime to Lambda or Kinesis Streams
-For generating a cloud watch Metric a Metric Filter can be used
+Cloudwatch logs are sent to the Region they were generated otherwise us-east-1 if service is global<p>
+**Log stream** is a sequence of Log Events that share the same source<p>
+**Log Group** is a group of Log Streams that share the same retention,monitoring and access control settings<p>
+**Metric Filter** can keep looking for specific pattern to result in a **Metric** that can generate alarm, which can trigger events<p>
+Exporting logs from Cloudwatch to S3 can take up to 12 hours (not real time) and the encryption will be done wih SSE-S3<p>
+**Subscription Filters** can be used to trigger lambda function based on incoming logs from log groups, or merge data in Kinesis Data Stream or other solutions<p>
+For near-realtime storage of logs Kinesis Firehose can be used as the destination of Subscription Filters, and for realtime to Lambda or Kinesis Streams<p>
+For generating a cloud watch Metric a Metric Filter can be used<p>
 ##  [Refresher] CloudTrail Refresher (14:10)
 ##  [DEMO] Setting up an Organisational Trail (17:53)
 ##  AWS X-Ray (6:42)
 ##  Cost Allocation Tags (4:43)
 ##  Trusted Advisor (8:35)
+**Trusted Advisor** is a tool that provides real time guidance regarding best practices in relation to your resources with topics such as:
+1. cost
+2. security / MFA / security groups
+3. fault tolerance
+4. performance
+5. over provisioned resources 
+6. service limits etc
+
+Works in Account Level, does not need agents to be installed, comes in three versions   
+1. Free (7 core checks) - 
+   1. S3 Bucket Permissions
+   2. Security Groups Unrestricted access
+   3. IAM use (at least 1 IAM user)
+   4. MFA on root account
+   5. EBS Public Snapshots
+   6. RDS Public Snapshots
+   7. 50 service Limit checks
+2. Business Plan / Enterprise Plan
+   1. +115 further checks
+   2. Access via AWS Support API
+   3. CloudWatch Integration
+3. Enterprise Plan
+   1. +Better response time
+
+
 ##  Section Quiz - Logging, Monitoring & Cost Management
 # DATABASES
 Relational / Key-Value / Document / In Memory / Graph / Time Series / Ledger<p>
