@@ -535,6 +535,7 @@ Backups
 ##  [NEW] CloudFront Security - Field-Level Encryption (9:26)
 ##  [NEW] CloudFront - Lambda@Edge (8:03)
 ##  [NEW] Elasticache (12:51)
+
 ##  SECTION QUIZ - CACHING, DELIVERY AND EDGE
 # MIGRATIONS & EXTENSIONS
 ##  The 6R's of Cloud Migration (15:45)
@@ -549,6 +550,17 @@ Ways to mikrate:
 
 ##  Virtual Machine Migrations (8:08)
 Migrating VMs and applications:
+We use the **Application Discovery Service** for DISCOVERY ONLY: a)**Agentless (Connector)** an OVA appliance (Open Virualization Format), integrates with VMWare and creates inventory and resource usage like CPU, limited capabilities of discovery, b)**Agent Based** discovery (within a VM) for full data gathering (network,processes,usage,performance etc), even network communication/dependency among servers
+Application Discovery Service can integrate with **AWS migration hub** which tracks migrations within AWS, by providing it the overall architecture of the on premises environment
+**SMS (Server Migration Service)** is an Agentless Connector that can migrate whole VM's to AWS of resources discovered by ADS, using Incremental replication of Live Volumes
+Server Migration Service supports:
+1. VMWare
+1. Hyper-V
+1. AzureVM
+
+SMS also supports multi-server migrations orchestration
+To use it we install a connector (a preconfigured VM) which can interact with the Virtual Server and access the VMs and associated storage, transfers data to S3 within AWS
+These S3 data can be converted to AMIs and used to create VMs or EC2, with CFN or other means
 
 ##  Database Migration Service (DMS) (11:06)
 Migration options
