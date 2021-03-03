@@ -119,6 +119,20 @@ Bucket Policy can allow access to specific VPCs<p>
 ##  [DEMO] Private S3 Buckets - PART1 - SETUP (8:39)
 ##  [DEMO] Private S3 Buckets - PART2 (17:19)
 ##  Advanced VPC DNS & DNS Endpoints (15:42)
+In VPC the +2 address of the CIDR is reserved for DNS and all VP resources can use it for DNS. e.g. for 10.16.0.0/16 the DNS would be 10.16.0.2<p>
+In Subnets the +2 address of the CIDR is also reserved and is called **Route53 Resolver** and provides R53 Public and Associated Private Zones<p>
+Route53 Resolver is only accessible from within a VPC (Not from site-to-site VPN or DX) => Hybrid network integration IN and OUT is problematic (AWS-On Prem)<p>
+We want On Prem and AWS VPC network to have a common DNS that is not publicly accessible.<p>
+On AWS VPC instances will use R53 resolver for Public and Private Zones. And next, the Public DNS. Private DNS is not available between AWS VPC - On Prem (Problem)<p>
+**Solution Before R53 Endpoints** was:
+1. AWS Side: a)DNS forwarder in EC2 with DHCP options sets, that forwards selectively to a1)On Premises Resolver, a2)otherwise to R53 Resolver otherwise on a3)Public DNS  
+2. On Prem side: a)On prem Resolver for private and locally hosted DNS zones  b)anything else to DNS forwarder and then to R53Resolver
+
+**Solution with Route 53 Enpoints**:
+Route53 Endpoints are VPC Interfaces (ENIs) so they are accessible over VPN and DX. <p>
+They use: <p>
+a) Inbound Enpoints for On Premises -> R53 resolver. Two AWS subnets, two IP addresses, On Prem DNS infrastructure configured to forward queries, for non local DNS<p>
+b) Outbound Endpoints for AWS VPC -> Conditional forwarders on R53Resolver -> Outbound Endpoint -> On-premised DNS<p>
 ##  [DEMO] Implementing AWS & On-premises Hybrid DNS - PART1 (8:41)
 ##  [DEMO] Implementing AWS & On-premises Hybrid DNS - PART2 (7:05)
 ##  [DEMO] Implementing AWS & On-premises Hybrid DNS - PART3 (16:25)
