@@ -204,8 +204,31 @@ Adding a Lifecycle Hook on Launch or Terminate we can add two more intermediate 
 ##  SECTION QUIZ - COMPUTE, SCALING & LOAD BALANCING
 # MONITORING, LOGGING & COST MANAGEMENT
 ##  CloudWatch-PART1 (10:00)
+Service for **Ingestion, Storage and Management** of **Metrics**<p>
+Public service so it is accessible from VPC and On Prem using API or Agent (custom metric)<p>
+Installing a CloudWatch Agent can provide richer metrics<p>
+Cloudwatch alarms react to metrics in comparison to **thresholds** and can be used to notify or perform actions (SNS notifications, ASG scaling events, EventBridge Events)<p>
+Apps from VPCs can connect to cloudwatch using either an IGW/Nat GW or an Interface Endpoint<p>
+**Namespace** is a container for metrics (e.g. AWS/EC2, AWS/Lambda). Start with AWS ONLY for Amazon metrics<p>
+**Datapoint** the smallest component of CW. Has a timestamp and a value<p>
+**Metric** a time ordered set of datapoints (e.g. CPUUtilization, NetworkIn,..) . Datapoint is included<p>
+**Each Metric** has a **Namespace** and a **MetricName**  <p>
+**Dimension** is a key pair allowing to multi tag a metric so as to use it in groups and aggregates accoringly afterwards or not<p>
+
 ##  CloudWatch-PART2 (9:31)
+**Resolution** either a)standard (60 second granularity) b)high (one second granularity) <p>
+**Statistics** are metric data aggregations over specified periods of time (e.g. Sum, Average) and use **Units** of measure (Bytes,Seconds,...)<p>
+**Retention** As data ages they are aggregated and stored for longer with less resolution (<60s for 3 hours, 60s for 15 days etc>)<p>
+**Percentile** help eliminate outliers by removing great peaks of data<p>
+
+1 Namespace - N Metric<p>
+1 Metric - N Datapoint<p>
+1 Datapoint - 1 Timestamp,Value,Unit of measure<p>
+
+N Dimensions - M Metrics<p>
+
 ##  CloudWatch Logs Refresher (14:00)
+We can publish multiple logs to Cloudwatch (e.g for mysql mysql error log, slow query log, general log)<p>
 ##  [Refresher] CloudTrail Refresher (14:10)
 ##  [DEMO] Setting up an Organisational Trail (17:53)
 ##  AWS X-Ray (6:42)
@@ -535,6 +558,14 @@ Backups
 ##  [NEW] CloudFront Security - Field-Level Encryption (9:26)
 ##  [NEW] CloudFront - Lambda@Edge (8:03)
 ##  [NEW] Elasticache (12:51)
+Significantly improves latency and throughput for read-heavy application workloads
+Elasticache consists of:
+1. Nodes (where instances of MemCache or Redis run. 1 Node - 1 Instance). Has its own DNS name and Port
+2. Redis Shards (grouping of nodes - 1 to 6 nodes)
+3. Clusters (1-90 shards if enabled) comprised of the Shards or the Nodes
+
+Memcache is simple, never persisted on Disk, can have 20 Nodes in a single cluster, automatic discovery of nodes in cluster, across AZs
+Redis is complex, supports snapshot of data , supports partitioning data across up to 90 shardsm supports replication, supports geospatial data, works across AZs
 
 ##  SECTION QUIZ - CACHING, DELIVERY AND EDGE
 # MIGRATIONS & EXTENSIONS
