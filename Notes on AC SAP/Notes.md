@@ -588,20 +588,20 @@ Backups
 ##  [NEW] CloudFront Security - Field-Level Encryption (9:26)
 ##  [NEW] CloudFront - Lambda@Edge (8:03)
 ##  [NEW] Elasticache (12:51)
-Significantly improves latency and throughput for read-heavy application workloads
+Significantly improves latency and throughput for read-heavy application workloads<p>
 Elasticache consists of:
 1. Nodes (where instances of MemCache or Redis run. 1 Node - 1 Instance). Has its own DNS name and Port
 2. Redis Shards (grouping of nodes - 1 to 6 nodes)
 3. Clusters (1-90 shards if enabled) comprised of the Shards or the Nodes
 
-Memcache is simple, never persisted on Disk, can have 20 Nodes in a single cluster, automatic discovery of nodes in cluster, across AZs
-Redis is complex, supports snapshot of data , supports partitioning data across up to 90 shardsm supports replication, supports geospatial data, works across AZs
+Memcache is simple, never persisted on Disk, can have 20 Nodes in a single cluster, automatic discovery of nodes in cluster, across AZs<p>
+Redis is complex, supports snapshot of data , supports partitioning data across up to 90 shardsm supports replication, supports geospatial data, works across AZs<p>
 
 ##  SECTION QUIZ - CACHING, DELIVERY AND EDGE
 # MIGRATIONS & EXTENSIONS
 ##  The 6R's of Cloud Migration (15:45)
-To migrate first we **Discover** then **Assess** and then **Prioritize** applications to migrate
-Ways to mikrate:
+To migrate first we **Discover** then **Assess** and then **Prioritize** applications to migrate<p>
+Ways to migrate:
 1. Rehost (Lift and Shift) - FOR Minimum effort /  not taking advantage of cloud / TO GAIN IaaS, Easier to Optimize when in AWS - USUALLY USING VM Import/Export + Server Migration Service (SMS)
 1. Replatform (Lift and Shift with optimization) - FOR Minimum Effort with Maximum Compatibility and Some Native Cloud. TO GAIN better IaaS without major code changes 
 1. Repurchasing (move to something new eg Saas - FOR moving from self managed products to AWS managed products. TO GAIN standardization, cost, risks, admin overhead, operational excellence
@@ -610,18 +610,18 @@ Ways to mikrate:
 1. Retain (not worth the time/effort to migrate) - FOR cases it is not worth to move or extremely risky Complex legacy applications / hard to test 
 
 ##  Virtual Machine Migrations (8:08)
-Migrating VMs and applications:
-We use the **Application Discovery Service** for DISCOVERY ONLY: a)**Agentless (Connector)** an OVA appliance (Open Virualization Format), integrates with VMWare and creates inventory and resource usage like CPU, limited capabilities of discovery, b)**Agent Based** discovery (within a VM) for full data gathering (network,processes,usage,performance etc), even network communication/dependency among servers
-Application Discovery Service can integrate with **AWS migration hub** which tracks migrations within AWS, by providing it the overall architecture of the on premises environment
-**SMS (Server Migration Service)** is an Agentless Connector that can migrate whole VM's to AWS of resources discovered by ADS, using Incremental replication of Live Volumes
+Migrating VMs and applications:<p>
+We use the **Application Discovery Service** for DISCOVERY ONLY: a)**Agentless (Connector)** an OVA appliance (Open Virualization Format), integrates with VMWare and creates inventory and resource usage like CPU, limited capabilities of discovery, b)**Agent Based** discovery (within a VM) for full data gathering (network,processes,usage,performance etc), even network communication/dependency among servers<p>
+Application Discovery Service can integrate with **AWS migration hub** which tracks migrations within AWS, by providing it the overall architecture of the on premises environment<p>
+**SMS (Server Migration Service)** is an Agentless Connector that can migrate whole VM's to AWS of resources discovered by ADS, using Incremental replication of Live Volumes<p>
 Server Migration Service supports:
 1. VMWare
 1. Hyper-V
 1. AzureVM
 
-SMS also supports multi-server migrations orchestration
+SMS also supports multi-server migrations orchestration<p>
 To use it we install a connector (a preconfigured VM) which can interact with the Virtual Server and access the VMs and associated storage, transfers data to S3 within AWS
-These S3 data can be converted to AMIs and used to create VMs or EC2, with CFN or other means
+These S3 data can be converted to AMIs and used to create VMs or EC2, with CFN or other means<p>
 
 ##  Database Migration Service (DMS) (11:06)
 Migration options
@@ -629,9 +629,9 @@ Migration options
 1. For Homogeneous it is better to use a)Read replica, b)Self managed export/import (engine specific) or other tools. Only for huge data DMS , supports CDC (change data capture) - good for near zero migration downtime
 1. For Heterogeneous we do two phases: a)Schema migration (AWS Schema Conversion tool), b)Data migration (Data Migration Service)
 
-DMS is administrative heavy but very strong
-DMS can also merge databases. At least one DB should be in AWS
-DMS Billing is like EC2 billing. We pay for the Cross AZ and for the Eggress (outgoing) traffic
+DMS is administrative heavy but very strong<p>
+DMS can also merge databases. At least one DB should be in AWS<p>
+DMS Billing is like EC2 billing. We pay for the Cross AZ and for the Eggress (outgoing) traffic<p>
 DMS High Level Steps:
 1. Create a Replication Instance on DMS
 1. Choose source endpoint for source DB (MySql)
@@ -644,8 +644,8 @@ DMS High Level Steps:
     * migrate existing data and replicate (full load + CDC)
     * replicate changes only (CDC)  
 
-DMS can provide data validation to ensure data were migrated accurately from source to target   . This happens right after a full load completes or as they occur during CDC 
-We are able to configure the validation settings and also have access to the tables statistics during validation to understand the progress
+DMS can provide data validation to ensure data were migrated accurately from source to target   . This happens right after a full load completes or as they occur during CDC <p>
+We are able to configure the validation settings and also have access to the tables statistics during validation to understand the progress<p>
 Supported sources for DMS:
 1. Everything
 1. Mongo DB
@@ -659,17 +659,19 @@ Supported targets for DMS:
 1. Mongo DB
 1. Elastic Search
 1. Apache Kafka   
-Schema Conversion Tool can convert schema between engines, supported for Windows, Fedora, MacOS, Ubuntu
+
+
+Schema Conversion Tool can convert schema between engines, supported for Windows, Fedora, MacOS, Ubuntu<p>
 
 Steps to use SCT are:
 1. Download and run installer for OS 
-1. Configure JDBC or other driver
-1. Create mapping rules
-1. Convert the schema
-1. Create migration assesment report
-1. handle manual conversions
-1. update and refresh the converted schema
-1. save and apply the converted schema
+2. Configure JDBC or other driver
+3. Create mapping rules
+4. Convert the schema
+5. Create migration assesment report
+6. handle manual conversions
+7. update and refresh the converted schema
+8. save and apply the converted schema
 
 On top of SCT with it we can use Data Extraction Agents for additional transformation of the source (processing takes place on additional EC2 or snowball Edge)
 DMS to migrate data across accounts:
@@ -689,12 +691,12 @@ Investigating DMS Tasks:
 1. Missing objects. DMS does not migrate secondary indexes or non-primary key constraints. This will have to be done manually using native DB tools
 1. CDC (change data capture - replication) stuck after full load: Indexes should be there otherwise full table scan,
 
-DMS is used for a)Modernization, b)Migration and c)Replication purposes
-WQF (Workload Qualification Framework) can help visualizing of the timeline of the migration. It is an AMI provided by Amazon Marketplace with SCT preinstalled
-Best Practices exist in Playbooks
-We use SCT + DMS + Playbooks
-We use Multi AZ DMS for HA during replication
-DMS uses eventual consistency to replicate (CDC) by monitoring/pushing the transaction logs
+DMS is used for a)Modernization, b)Migration and c)Replication purposes<p>
+WQF (Workload Qualification Framework) can help visualizing of the timeline of the migration. It is an AMI provided by Amazon Marketplace with SCT preinstalled<p>
+Best Practices exist in Playbooks<p>
+We use SCT + DMS + Playbooks<p>
+We use Multi AZ DMS for HA during replication<p>
+DMS uses eventual consistency to replicate (CDC) by monitoring/pushing the transaction logs<p>
 ##  [AdvancedDEMO] Database Migration Service-STAGE1 (6:08)
 ##  [AdvancedDEMO] Database Migration Service-STAGE2 (6:52)
 ##  [AdvancedDEMO] Database Migration Service-STAGE3-PART1 (11:16)
@@ -705,7 +707,7 @@ DMS uses eventual consistency to replicate (CDC) by monitoring/pushing the trans
 ##  Storage Gateway - Tape Gateway (VTL) (12:11)
 ##  Storage Gateway - File Gateway (12:17)
 ##  AWS Snowball // Snowball Edge // Snowmobile (10:45)
-Snoball edge has on-board storage and compute poer and supports S3 API
+Snoball edge has on-board storage and compute poer and supports S3 API<p>
 Use cases:
 1. Bandwidth
 1. No access to the target database/storage
@@ -715,18 +717,18 @@ Migration Process:
 1. Edge device automatically loads data to S3 bucket
 1. AWS DMS takes the files and migrates to target data store
 
-Files uploaded to Snowball in order to be able to be uploaded to S3 they need to be <5TB. 
+Files uploaded to Snowball in order to be able to be uploaded to S3 they need to be <5TB. <p>
 ##  [Refresher] AWS Datasync (9:27)
 ##  SECTION QUIZ - MIGRATIONS & EXTENSIONS
 # DEPLOYMENT & MANAGEMENT
 ##  [Refresher] CloudFormation Refresher (10:55)
-Importing Stacks and not hardcoding ARN ensures a deletion of an imported stack does not leave the stack orphan. Prefer it over hardcoded ARN
-cfn-init (try to reach specific end states - unlike bootstrap that runs script)
-cfn-signal can provide accurately if the creation has indeed been completed
-cfn-hup to monitor for N time after cfn-init, for changes/actions
-logs of cfn-init and similar are under var/log on Ubuntu
-AWS SAM, i can write on YAML/JSON and also test locally. Supports native transformation
-AWS CDK, i can write on javascript/typescript/python/java/.net. Reusability. Supports native transformation
+Importing Stacks and not hardcoding ARN ensures a deletion of an imported stack does not leave the stack orphan. Prefer it over hardcoded ARN<p>
+cfn-init (try to reach specific end states - unlike bootstrap that runs script)<p>
+cfn-signal can provide accurately if the creation has indeed been completed<p>
+cfn-hup to monitor for N time after cfn-init, for changes/actions<p>
+logs of cfn-init and similar are under var/log on Ubuntu<p>
+AWS SAM, i can write on YAML/JSON and also test locally. Supports native transformation<p>
+AWS CDK, i can write on javascript/typescript/python/java/.net. Reusability. Supports native transformation<p>
 ##  CloudFormation Custom Resources-PART1-THEORY (11:43)
 ##  CloudFormation Custom Resources-PART2-DEMO (11:35)
 ##  CloudFormation Nested Stacks (14:17)
@@ -774,14 +776,14 @@ AWS CDK, i can write on javascript/typescript/python/java/.net. Reusability. Sup
 ##  AWS Rekognition (4:51)
 ##  Kinesis Video Streams (5:09)
 ##  AWS Glue (6:23)
-Glue is a fully managed serverless ETL service (Extract,Transform and Load - like Talend) that helps us organize and format out data for use with e.g. Redshift
-AWS Glue can extract data from a source (S3,RDS,JDBC,DynamoDB,Kinesis Data Streams, Apache Kafka), clean it up, transform it and then move it to our desired datastore (e.g. S3, RDS, JDBC, Redshift, Elastic Map Reduce)
-AWS Glue Catalog is where we store annotate and share metadata. 
-Avoid data silos as the Catalog is shared for the account, per region.
-Glue jobs can be triggered manually OR via events using Event Bridge
-e.g. Storing data to a Data Lake (e.g. S3) -> Define a Glue Crawler -> Point it to DataStore -> Table Definitions created
-e.g. Glue can generate Scala or Python script for transformation
-The catalog helps us create and monitor our ETL jobs, to populate the catalog we use our crawler
+Glue is a fully managed serverless ETL service (Extract,Transform and Load - like Talend) that helps us organize and format out data for use with e.g. Redshift<p>
+AWS Glue can extract data from a source (S3,RDS,JDBC,DynamoDB,Kinesis Data Streams, Apache Kafka), clean it up, transform it and then move it to our desired datastore (e.g. S3, RDS, JDBC, Redshift, Elastic Map Reduce)<p>
+AWS Glue Catalog is where we store annotate and share metadata. <p>
+Avoid data silos as the Catalog is shared for the account, per region.<p>
+Glue jobs can be triggered manually OR via events using Event Bridge<p>
+e.g. Storing data to a Data Lake (e.g. S3) -> Define a Glue Crawler -> Point it to DataStore -> Table Definitions created<p>
+e.g. Glue can generate Scala or Python script for transformation<p>
+The catalog helps us create and monitor our ETL jobs, to populate the catalog we use our crawler<p>
 Glue Data Catalog will contain the following information )metadata):
 1. Connections
 1. Crawlers
@@ -790,13 +792,13 @@ Glue Data Catalog will contain the following information )metadata):
 1. ETL Jobs
 1. Triggers
 
-Glue Pricing is per DPU (Data Processing Unit - 4VCPU and 16GB RAM)
+Glue Pricing is per DPU (Data Processing Unit - 4VCPU and 16GB RAM)<p>
 Glue Jobs:
 1. Apache Spark Jobs
 1. Streaming ETL Jobs (Spark Streaming)
 1. Python Shell 
 
-DataPipelines is what was used before Glue and is not Serverless. Requires instances to run but is similar
+DataPipelines is what was used before Glue and is not Serverless. Requires instances to run but is similar<p>
 ##  Device Farm (4:19)
 
 
