@@ -214,21 +214,26 @@ Apps from VPCs can connect to cloudwatch using either an IGW/Nat GW or an Interf
 **Metric** a time ordered set of datapoints (e.g. CPUUtilization, NetworkIn,..) . Datapoint is included<p>
 **Each Metric** has a **Namespace** and a **MetricName**  <p>
 **Dimension** is a key pair allowing to multi tag a metric so as to use it in groups and aggregates accoringly afterwards or not<p>
-
 ##  CloudWatch-PART2 (9:31)
 **Resolution** either a)standard (60 second granularity) b)high (one second granularity) <p>
 **Statistics** are metric data aggregations over specified periods of time (e.g. Sum, Average) and use **Units** of measure (Bytes,Seconds,...)<p>
 **Retention** As data ages they are aggregated and stored for longer with less resolution (<60s for 3 hours, 60s for 15 days etc>)<p>
 **Percentile** help eliminate outliers by removing great peaks of data<p>
-
 1 Namespace - N Metric<p>
 1 Metric - N Datapoint<p>
 1 Datapoint - 1 Timestamp,Value,Unit of measure<p>
-
 N Dimensions - M Metrics<p>
-
 ##  CloudWatch Logs Refresher (14:00)
-We can publish multiple logs to Cloudwatch (e.g for mysql mysql error log, slow query log, general log)<p>
+We can publish multiple logs to Cloudwatch (e.g for mysql mysql error log, slow query log, general log) or any other log, for cloudwatch to ingest them, on public AWS<p>
+Also we can subscribe services to Cloudwatch events to trigger further actions<p>
+Cloudwatch logs are sent to the Region they were generated otherwise us-east-1 if service is global
+**Log stream** is a sequence of Log Events that share the same source
+**Log Group** is a group of Log Streams that share the same retention,monitoring and access control settings
+**Metric Filter** can keep looking for specific pattern to result in a **Metric** that can generate alarm, which can trigger events
+Exporting logs from Cloudwatch to S3 can take up to 12 hours (not real time) and the encryption will be done wih SSE-S3
+**Subscription Filters** can be used to trigger lambda function based on incoming logs from log groups, or merge data in Kinesis Data Stream or other solutions
+For near-realtime storage of logs Kinesis Firehose can be used as the destination of Subscription Filters, and for realtime to Lambda or Kinesis Streams
+For generating a cloud watch Metric a Metric Filter can be used
 ##  [Refresher] CloudTrail Refresher (14:10)
 ##  [DEMO] Setting up an Organisational Trail (17:53)
 ##  AWS X-Ray (6:42)
