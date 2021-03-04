@@ -7,7 +7,7 @@ Playground for CloudFormation - This project will be built up incrementally tryi
 Progressive Versions
 
 ### V1 (One VPC with Internet Connectivity on two AZ) 
-![alt text](00_Infrastructure/aws-playground-infrastructure.jpg "Infra")
+![alt text](00_Infrastructure/aws-playground-infrastructure_v1.jpg "Infra")
 
 ### V2 (+Second VPC, VPC peering, routing across private subnets) 
 ![alt text](00_Infrastructure/aws-playground-infrastructure_v2.jpg "Infra")

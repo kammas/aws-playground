@@ -1,6 +1,7 @@
 ### Deploying the full infrastructure via CLI 
 aws configure --profile cloudguru
-aws configure list
+aws configure list --profile cloudguru
+aws s3 ls --profile cloudguru
 
 R53DOMAIN=test.cmcloudlab520.info
 R53HOSTEDZONEID=Z07146542VPODC5DKZYB9
