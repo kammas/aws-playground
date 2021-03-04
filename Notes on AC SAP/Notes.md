@@ -118,6 +118,10 @@ Endpoint Policy just controlls restrictions (like SCP)<p>
 Bucket Policy can allow access to specific VPCs<p>
 ##  [DEMO] Private S3 Buckets - PART1 - SETUP (8:39)
 ##  [DEMO] Private S3 Buckets - PART2 (17:19)
+We want to create three buckets with different access
+1. Public access + from limited VPC subnets. Both from VPC and Internet but from specific subnet only. From VPC we use Gateway Endpoint (automatically adds route with prefix Destination to go to the Endpoint) and lock the subnet we want. Also S3 bucket policy to allow
+2. Private access VPC only, specific subnet. From VPC we use Gateway Endpoint and lock the subnet we want. Also combine it with S3 bucket policy to allow the specific arn of the endpoint only
+3. Only public not VPC. Endpoint policy prohibits connecting to Bucket from VPC
 ##  Advanced VPC DNS & DNS Endpoints (15:42)
 In VPC the +2 address of the CIDR is reserved for DNS and all VP resources can use it for DNS. e.g. for 10.16.0.0/16 the DNS would be 10.16.0.2<p>
 In Subnets the +2 address of the CIDR is also reserved and is called **Route53 Resolver** and provides R53 Public and Associated Private Zones<p>
