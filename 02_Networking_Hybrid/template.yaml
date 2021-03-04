@@ -128,9 +128,9 @@ Resources:
       RouteTableId:
         Ref: PRRT1
   #PrivateS3 Buckets
-  PRS31:
+  privatecats:
     Type: AWS::S3::Bucket
-  PBS31:
+  publiccats:
     Type: AWS::S3::Bucket
   SG1:
     Type: 'AWS::EC2::SecurityGroup'
@@ -295,15 +295,15 @@ Resources:
     Properties:
       ServiceToken: !GetAtt CopyS3ObjectsFunction.Arn
       SourceBucket: "cl-shared-private-s3-bucket"
-      SourcePrefix: "PBS31"
-      Bucket: !Ref PBS31
+      SourcePrefix: "publiccats"
+      Bucket: !Ref publiccats
   copyprivatecats:
     Type: "Custom::S3Objects"
     Properties:
       ServiceToken: !GetAtt CopyS3ObjectsFunction.Arn
       SourceBucket: "cl-shared-private-s3-bucket"
-      SourcePrefix: "PRS31"
-      Bucket: !Ref PRS31
+      SourcePrefix: "privatecats"
+      Bucket: !Ref privatecats
   S3CopyRole:
     Type: AWS::IAM::Role
     Properties:
@@ -352,10 +352,10 @@ Resources:
                   - "s3:DeleteObjectVersion"
                   - "s3:CopyObject"
                 Resource:
-                  - !Sub "arn:aws:s3:::${PRS31}"
-                  - !Sub "arn:aws:s3:::${PRS31}/*"
-                  - !Sub "arn:aws:s3:::${PBS31}"
-                  - !Sub "arn:aws:s3:::${PBS31}/*"
+                  - !Sub "arn:aws:s3:::${privatecats}"
+                  - !Sub "arn:aws:s3:::${privatecats}/*"
+                  - !Sub "arn:aws:s3:::${publiccats}"
+                  - !Sub "arn:aws:s3:::${publiccats}/*"
   CopyS3ObjectsFunction:
     Type: AWS::Lambda::Function
     Properties:
