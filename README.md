@@ -10,7 +10,7 @@ Playground for CloudFormation - This project will be built up incrementally tryi
 TODO
 
 ## 02 Networking and Hybrid
-![alt text](02_Networking_Hybrid/architecture.jpg "Networking and Hybrid")
+![alt text](02_Networking_Hybrid/aws-playground-02_network_and_hybrid.jpg "Networking and Hybrid")
 
 
 
