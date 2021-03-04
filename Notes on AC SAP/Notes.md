@@ -131,8 +131,8 @@ On AWS VPC instances will use R53 resolver for Public and Private Zones. And nex
 **Solution with Route 53 Enpoints**:
 Route53 Endpoints are VPC Interfaces (ENIs) so they are accessible over VPN and DX. <p>
 They use: <p>
-a) Inbound Enpoints for On Premises -> R53 resolver. Two AWS subnets, two IP addresses, On Prem DNS infrastructure configured to forward queries, for non local DNS<p>
-b) Outbound Endpoints for AWS VPC -> Conditional forwarders on R53Resolver -> Outbound Endpoint -> On-premised DNS<p>
+a) Resolver Inbound Enpoints for On Premises -> R53 resolver. Two AWS subnets, two IP addresses, On Prem DNS infrastructure configured to forward queries, for non local DNS<p>
+b) Resolver Outbound Endpoints for AWS VPC -> Conditional forwarders on R53Resolver -> Outbound Endpoint -> On-premises DNS<p>
 ##  [DEMO] Implementing AWS & On-premises Hybrid DNS - PART1 (8:41)
 ##  [DEMO] Implementing AWS & On-premises Hybrid DNS - PART2 (7:05)
 ##  [DEMO] Implementing AWS & On-premises Hybrid DNS - PART3 (16:25)

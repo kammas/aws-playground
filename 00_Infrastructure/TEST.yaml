@@ -1,7 +1,25 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description:  AWS Playground - Creating The Instance Role whose credentials will leak
+Description:  AWS Playground - Test template
 Metadata:
   LICENSE: Apache License Version 2.0
+Parameters:  
+  param1:
+    Type: String
+    Default: dev
+    Description: my param 
 Resources:
   PrivateBucket1: 
-    Type: AWS::S3::Bucket     
+    Type: AWS::S3::Bucket
+  PrivateBucket2: 
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref param1
+  PrivateBucket3: 
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref param1        
+        

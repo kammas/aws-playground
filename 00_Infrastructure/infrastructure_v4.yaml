@@ -1190,7 +1190,4 @@ Outputs:
     Description: The Load Balancer URL
     Value: !Sub 'http://${ALB.DNSName}'                    
        
-         
-                  
-             
-  
+        
