@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description:  AWS Playground - Creating The Instance Role whose credentials will leak
+Description:  AWS Playground - Networking and Hybrid
 Metadata:
   LICENSE: Apache License Version 2.0
 Mappings:

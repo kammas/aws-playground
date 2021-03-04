@@ -1042,8 +1042,8 @@ Resources:
       - ssmec2messagesVPCe
       - ssmmessagesVPCe
     Properties:
-      InstanceType: "t3.small"
-      ImageId: "ami-0ac80df6eff0e70b5"
+      InstanceType: "t2.micro"
+      ImageId: !Ref LatestAmiId
       SubnetId: !Ref Pub
       SecurityGroupIds: 
         - !Ref InstanceSGOnPrem1
@@ -1093,8 +1093,8 @@ Resources:
       - ssmec2messagesVPCe
       - ssmmessagesVPCe
     Properties:
-      InstanceType: "t3.small"
-      ImageId: "ami-0ac80df6eff0e70b5"
+      InstanceType: "t2.micro"
+      ImageId: !Ref LatestAmiId
       SubnetId: !Ref Pub
       SecurityGroupIds: 
         - !Ref InstanceSGOnPrem1

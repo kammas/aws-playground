@@ -6,7 +6,7 @@ aws s3 ls --profile cloudguru
 # Create Main Stack
 ```shell
 PROFILE=cloudguru
-STACKNAME=mystack01
+STACKNAME=mystack02
 REGION=us-east-1
 aws cloudformation create-stack \
   --stack-name $STACKNAME \
@@ -20,7 +20,7 @@ aws cloudformation create-stack \
 # Deploy Main Stack changes
 ```shell
 PROFILE=cloudguru
-STACKNAME=mystack01
+STACKNAME=mystack02
 REGION=us-east-1
 aws cloudformation deploy \
   --stack-name $STACKNAME \
