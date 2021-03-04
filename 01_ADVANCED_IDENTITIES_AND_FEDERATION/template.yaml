@@ -1,0 +1,261 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description:  AWS Playground - Creating The Instance Role whose credentials will leak
+Metadata:
+  LICENSE: Apache License Version 2.0
+Mappings:
+  Network:
+    Settings:
+      VpcCidr1: '10.16.0.0/17'
+      SubnetPrivA1: '10.16.0.0/19'
+      SubnetPrivB1: '10.16.32.0/19'
+      SubnetPubA1: '10.16.64.0/19'
+      SubnetPubB1: '10.16.96.0/19'
+      VpcCidr2: '10.16.128.0/17'
+      SubnetPrivA2: '10.16.128.0/19'
+      SubnetPrivB2: '10.16.160.0/19'
+      SubnetPubA2: '10.16.192.0/19'
+      SubnetPubB2: '10.16.224.0/19'
+Parameters:
+  LatestAmiId:
+    Description: AMI for Bastion Host (default is latest AmaLinux2)
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'       
+Resources:
+  # VPC1 Resources
+  awsVPC1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !FindInMap [ Network, Settings, VpcCidr1 ]
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: awsVPC1
+  awsInternetGateway1:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: awsIGW1
+  awsInternetGatewayAttachment1:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref awsVPC1
+      InternetGatewayId: !Ref awsInternetGateway1
+  awsPublicRouteTable1: 
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref awsVPC1
+      Tags:
+      - Key: Name
+        Value: awsPublicRT1
+  awsPrivateRouteTable1: 
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref awsVPC1
+      Tags:
+      - Key: Name
+        Value: awsPrivateRT1
+  awsDefaultV4Route1: 
+    Type: 'AWS::EC2::Route'
+    DependsOn: awsInternetGatewayAttachment1
+    Properties:
+      RouteTableId:
+        Ref: awsPublicRouteTable1
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId:
+        Ref: awsInternetGateway1
+  awsPublicSubnetA1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref awsVPC1
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !FindInMap [ Network, Settings, SubnetPubA1 ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: aws-publicA1
+  awsPublicSubnetB1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref awsVPC1
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !FindInMap [ Network, Settings, SubnetPubB1 ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: aws-publicB1
+  awsPrivateSubnetA1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref awsVPC1
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !FindInMap [ Network, Settings, SubnetPrivA1 ]
+      Tags:
+        - Key: Name
+          Value: aws-privateA1
+  awsPrivateSubnetB1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref awsVPC1
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !FindInMap [ Network, Settings, SubnetPrivB1 ]
+      Tags:
+        - Key: Name
+          Value: aws-privateB1
+  awsPublicARouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref awsPublicSubnetA1
+      RouteTableId:
+        Ref: awsPublicRouteTable1
+  awsPublicBRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref awsPublicSubnetB1
+      RouteTableId:
+        Ref: awsPublicRouteTable1
+  awsPrivateARouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref awsPrivateSubnetA1
+      RouteTableId:
+        Ref: awsPrivateRouteTable1
+  awsPrivateBRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref awsPrivateSubnetB1
+      RouteTableId:
+        Ref: awsPrivateRouteTable1
+  # VPC2 Resources
+  awsVPC2:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !FindInMap [ Network, Settings, VpcCidr2 ]
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: awsVPC2
+  awsInternetGateway2:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: awsIGW2
+  awsInternetGatewayAttachment2:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref awsVPC2
+      InternetGatewayId: !Ref awsInternetGateway2
+  awsPublicRouteTable2: 
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref awsVPC2
+      Tags:
+      - Key: Name
+        Value: awsPublicRT2
+  awsPrivateRouteTable2: 
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref awsVPC2
+      Tags:
+      - Key: Name
+        Value: awsPrivateRT2
+  awsDefaultV4Route2: 
+    Type: 'AWS::EC2::Route'
+    DependsOn: awsInternetGatewayAttachment2
+    Properties:
+      RouteTableId:
+        Ref: awsPublicRouteTable2
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId:
+        Ref: awsInternetGateway2
+  awsPublicSubnetA2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref awsVPC2
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !FindInMap [ Network, Settings, SubnetPubA2 ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: aws-publicA2
+  awsPublicSubnetB2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref awsVPC2
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !FindInMap [ Network, Settings, SubnetPubB2 ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: aws-publicB2
+  awsPrivateSubnetA2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref awsVPC2
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !FindInMap [ Network, Settings, SubnetPrivA2 ]
+      Tags:
+        - Key: Name
+          Value: aws-privateA2
+  awsPrivateSubnetB2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref awsVPC2
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !FindInMap [ Network, Settings, SubnetPrivB2 ]
+      Tags:
+        - Key: Name
+          Value: aws-privateB2
+  awsPublicARouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref awsPublicSubnetA2
+      RouteTableId:
+        Ref: awsPublicRouteTable2
+  awsPublicBRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref awsPublicSubnetB2
+      RouteTableId:
+        Ref: awsPublicRouteTable2
+  awsPrivateARouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref awsPrivateSubnetA2
+      RouteTableId:
+        Ref: awsPrivateRouteTable2
+  awsPrivateBRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref awsPrivateSubnetB2
+      RouteTableId:
+        Ref: awsPrivateRouteTable2
+  vpcpeer12:
+    Type: AWS::EC2::VPCPeeringConnection
+    Properties: 
+      PeerVpcId: !Ref awsVPC2
+      Tags: 
+        - Key: Name
+          Value: VPCPeer12
+      VpcId: !Ref awsVPC1
+  awsVpcPeerRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: vpcpeer12
+    Properties:
+        RouteTableId:
+          Ref: awsPrivateRouteTable1
+        DestinationCidrBlock: !FindInMap [ Network, Settings, VpcCidr2 ]
+        VpcPeeringConnectionId:
+          Ref: vpcpeer12
+  awsVpcPeerRoute2:
+    Type: AWS::EC2::Route
+    DependsOn: vpcpeer12
+    Properties:
+        RouteTableId:
+          Ref: awsPrivateRouteTable2
+        DestinationCidrBlock: !FindInMap [ Network, Settings, VpcCidr1 ]
+        VpcPeeringConnectionId:
+          Ref: vpcpeer12             
