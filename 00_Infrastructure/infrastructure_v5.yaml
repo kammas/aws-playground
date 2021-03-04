@@ -870,60 +870,60 @@ Resources:
       Tier: Standard
       Description: SSM Parameter for CloudWatchAgent Config
       Value: "{\n\t\"agent\": {\n\t\t\"metrics_collection_interval\": 60,\n\t\t\"run_as_user\": \"root\"\n\t},\n\t\"logs\": {\n\t\t\"logs_collected\": {\n\t\t\t\"files\": {\n\t\t\t\t\"collect_list\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"file_path\": \"/var/log/secure\",\n\t\t\t\t\t\t\"log_group_name\": \"/var/log/secure\",\n\t\t\t\t\t\t\"log_stream_name\": \"{instance_id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"file_path\": \"/var/log/httpd/access_log\",\n\t\t\t\t\t\t\"log_group_name\": \"/var/log/httpd/access_log\",\n\t\t\t\t\t\t\"log_stream_name\": \"{instance_id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"file_path\": \"/var/log/httpd/error_log\",\n\t\t\t\t\t\t\"log_group_name\": \"/var/log/httpd/error_log\",\n\t\t\t\t\t\t\"log_stream_name\": \"{instance_id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t}\n\t},\n\t\"metrics\": {\n\t\t\"append_dimensions\": {\n\t\t\t\"AutoScalingGroupName\": \"${aws:AutoScalingGroupName}\",\n\t\t\t\"ImageId\": \"${aws:ImageId}\",\n\t\t\t\"InstanceId\": \"${aws:InstanceId}\",\n\t\t\t\"InstanceType\": \"${aws:InstanceType}\"\n\t\t},\n\t\t\"metrics_collected\": {\n\t\t\t\"collectd\": {\n\t\t\t\t\"metrics_aggregation_interval\": 60\n\t\t\t},\n\t\t\t\"cpu\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"cpu_usage_idle\",\n\t\t\t\t\t\"cpu_usage_iowait\",\n\t\t\t\t\t\"cpu_usage_user\",\n\t\t\t\t\t\"cpu_usage_system\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60,\n\t\t\t\t\"resources\": [\n\t\t\t\t\t\"*\"\n\t\t\t\t],\n\t\t\t\t\"totalcpu\": false\n\t\t\t},\n\t\t\t\"disk\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"used_percent\",\n\t\t\t\t\t\"inodes_free\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60,\n\t\t\t\t\"resources\": [\n\t\t\t\t\t\"*\"\n\t\t\t\t]\n\t\t\t},\n\t\t\t\"diskio\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"io_time\",\n\t\t\t\t\t\"write_bytes\",\n\t\t\t\t\t\"read_bytes\",\n\t\t\t\t\t\"writes\",\n\t\t\t\t\t\"reads\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60,\n\t\t\t\t\"resources\": [\n\t\t\t\t\t\"*\"\n\t\t\t\t]\n\t\t\t},\n\t\t\t\"mem\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"mem_used_percent\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60\n\t\t\t},\n\t\t\t\"netstat\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"tcp_established\",\n\t\t\t\t\t\"tcp_time_wait\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60\n\t\t\t},\n\t\t\t\"statsd\": {\n\t\t\t\t\"metrics_aggregation_interval\": 60,\n\t\t\t\t\"metrics_collection_interval\": 10,\n\t\t\t\t\"service_address\": \":8125\"\n\t\t\t},\n\t\t\t\"swap\": {\n\t\t\t\t\"measurement\": [\n\t\t\t\t\t\"swap_used_percent\"\n\t\t\t\t],\n\t\t\t\t\"metrics_collection_interval\": 60\n\t\t\t}\n\t\t}\n\t}\n}"
-  # route53HealthCheckPrimary:
-  #   Type: AWS::Route53::HealthCheck
-  #   DependsOn: EC2A2
-  #   Properties: 
-  #     HealthCheckConfig:
-  #       FailureThreshold: 3
-  #       FullyQualifiedDomainName: !Ref route53DomainName
-  #       IPAddress: !GetAtt EC2A2.PublicIp
-  #       Port: 80
-  #       RequestInterval: 30
-  #       ResourcePath: '/'
-  #       Type: HTTP
-  #     HealthCheckTags:
-  #       - Key: 'Name'
-  #         Value: 'health-check-primary'
-  # route53HealthCheckSecondary:
-  #   Type: AWS::Route53::HealthCheck
-  #   DependsOn: EC2B2
-  #   Properties: 
-  #     HealthCheckConfig:
-  #       FailureThreshold: 3
-  #       FullyQualifiedDomainName: !Ref route53DomainName
-  #       IPAddress: !GetAtt EC2B2.PublicIp
-  #       Port: 80
-  #       RequestInterval: 30
-  #       ResourcePath: '/'
-  #       Type: HTTP
-  #     HealthCheckTags:
-  #       - Key: 'Name'
-  #         Value: 'health-check-secondary'
-  # route53RecordPrimary:
-  #   Type: AWS::Route53::RecordSet
-  #   Properties: 
-  #     Failover: 'PRIMARY'
-  #     HealthCheckId: !Ref route53HealthCheckPrimary
-  #     HostedZoneId: !Ref route53HostedZoneId
-  #     Name: !Ref route53DomainName
-  #     ResourceRecords: 
-  #       - !GetAtt EC2A2.PublicIp
-  #     SetIdentifier: 'recordset-primary'
-  #     TTL: '60'
-  #     Type: 'A'
-  # route53RecordSecondary:
-  #   Type: AWS::Route53::RecordSet
-  #   Properties: 
-  #     Failover: 'SECONDARY'
-  #     HealthCheckId: !Ref route53HealthCheckSecondary
-  #     HostedZoneId: !Ref route53HostedZoneId
-  #     Name: !Ref route53DomainName
-  #     ResourceRecords: 
-  #       - !GetAtt EC2B2.PublicIp
-  #     SetIdentifier: 'recordset-secondary'
-  #     TTL: '60'
-  #     Type: 'A'
+  route53HealthCheckPrimary:
+    Type: AWS::Route53::HealthCheck
+    DependsOn: EC2A2
+    Properties: 
+      HealthCheckConfig:
+        FailureThreshold: 3
+        FullyQualifiedDomainName: !Ref route53DomainName
+        IPAddress: !GetAtt EC2A2.PublicIp
+        Port: 80
+        RequestInterval: 30
+        ResourcePath: '/'
+        Type: HTTP
+      HealthCheckTags:
+        - Key: 'Name'
+          Value: 'health-check-primary'
+  route53HealthCheckSecondary:
+    Type: AWS::Route53::HealthCheck
+    DependsOn: EC2B2
+    Properties: 
+      HealthCheckConfig:
+        FailureThreshold: 3
+        FullyQualifiedDomainName: !Ref route53DomainName
+        IPAddress: !GetAtt EC2B2.PublicIp
+        Port: 80
+        RequestInterval: 30
+        ResourcePath: '/'
+        Type: HTTP
+      HealthCheckTags:
+        - Key: 'Name'
+          Value: 'health-check-secondary'
+  route53RecordPrimary:
+    Type: AWS::Route53::RecordSet
+    Properties: 
+      Failover: 'PRIMARY'
+      HealthCheckId: !Ref route53HealthCheckPrimary
+      HostedZoneId: !Ref route53HostedZoneId
+      Name: !Ref route53DomainName
+      ResourceRecords: 
+        - !GetAtt EC2A2.PublicIp
+      SetIdentifier: 'recordset-primary'
+      TTL: '60'
+      Type: 'A'
+  route53RecordSecondary:
+    Type: AWS::Route53::RecordSet
+    Properties: 
+      Failover: 'SECONDARY'
+      HealthCheckId: !Ref route53HealthCheckSecondary
+      HostedZoneId: !Ref route53HostedZoneId
+      Name: !Ref route53DomainName
+      ResourceRecords: 
+        - !GetAtt EC2B2.PublicIp
+      SetIdentifier: 'recordset-secondary'
+      TTL: '60'
+      Type: 'A'
 # On Prem VPC
   OnPremVPC1:
     Type: AWS::EC2::VPC
