@@ -183,16 +183,16 @@ not everything in aws supports IPv6 (eg PrivateLink and Interface Endpoints DO N
 ##  Advanced VPC Structure - How Many AZs ? (11:53)
 To calculate the AZs i should use, i subtract from the total AZs, the Buffer AZ (how many we should be able to tolerate going down)-> Nominal AZs (e.g. 6-1=5)<p>
 ##  Advanced VPC Structure - Subnets & Tiers - PART1 (7:43)
-NACL is per subnet. One reason to have more than 1 subnets is if we need to use different EXPLICIT DENIES to IP addresses or set of IP addresses
-SGs can be configured to allow connectivity only from specific resources/ENIs (e.g. EC2)
+NACL is per subnet. One reason to have more than 1 subnets is if we need to use different EXPLICIT DENIES to IP addresses or set of IP addresses<p>
+SGs can be configured to allow connectivity only from specific resources/ENIs (e.g. EC2)<p>
 So a DB in a Public subnet could have the followig protection:
 1. Not assign public IP
 2. Using SG allow connectivity only from an EC2
 
-If we split the APP and DB in different subnets we can add one more extra security Layer - a NACL
-Also one more additional security / better design is that we can have different Route Tables for Public subnets and Private Subnets (which is the main reason of multiple subnets)
-An internet Facing ALB needs to run from Public Subnets, HOWEVER it can communicate with Private Instances (within private subnets) 
+If we split the APP and DB in different subnets we can add one more extra security Layer - a NACL<p>
+Also one more additional security / better design is that we can have different Route Tables for Public subnets and Private Subnets (which is the main reason of multiple subnets)<p>
 ##  Advanced VPC Structure - Subnets & Tiers - PART2 (14:10)
+An internet Facing ALB needs to run from Public Subnets, HOWEVER it can communicate with Private Instances (within private subnets) 
 ##  SECTION QUIZ - NETWORKING & HYBRID
 # STORAGE SERVICES
 ##  [Refresher] FSx for Windows File Server (11:34)
