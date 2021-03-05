@@ -138,10 +138,22 @@ They use: <p>
 a) Resolver Inbound Enpoints for On Premises -> R53 resolver. Two AWS subnets, two IP addresses, On Prem DNS infrastructure configured to forward queries, for non local DNS<p>
 b) Resolver Outbound Endpoints for AWS VPC -> Conditional forwarders on R53Resolver -> Outbound Endpoint -> On-premises DNS<p>
 ##  [DEMO] Implementing AWS & On-premises Hybrid DNS - PART1 (8:41)
+We are building an advanced DNS solution between On Prem and AWS, that will allow On Prem and AWS to resolve DNS of servers within AWS/On Prem without using a Public DNS
+To implement this normally we would be having something like Direct Connect + VPN, but for demo we use VPC peering. Steps are
+1. We create a VPC peering connection 
+2. Configure also routing of the Route Tables in both subnets
+3. Create Inbound Endpoints (on AWS VPC) from the Route53 service with security group that allows traffic from any source IP on ICMP, and all TCP ports for two AZs and Subnets where the ENIs will be injected. This allows traffic headed to Inbound Endpoints to reach correct destination   
+4. On the On Prem DNS servers, we will add the zone of aws, with the Endpoint IPs, on each DNS server. This will forward DNS requests from the On Prem DNS servers, to the Inbound endpoints of AWS.With the help of one ore more Private Hosted Zone (Route53), having A records towards EC2s, we can route traffic using names to the correct IP of AWS instance . On Prem -> DNS1/DNS2 -> Inbound IP1/2->Route53 Private Hosted Zones -> Arecord
+5. Next assuming there was a different DNS used by APPS on prem, we will change Apps on prem to use for DNS the two new DNS On Prem Servers. Now all traffic can be routed from On Prem to AWS
+6. Next we create on the AWS VPC (again) an Outbound Endpoint from the Route53 service, with same security group as the Inbound Endpoint. This will allow AWS DNS queries of the AWS to identify IPs of On Prem servers. 
+7. Also we will create a forward Rule from Route53 for each On Prem domain we want AWS services to use the rule and associate it with the AWS VPC and Outbound Endpoint and also define the On Prem endpoints that should be used as targets in that case (the two IPs of On Prem DNS at port 53). 
+8. Now all DNS from AWS EC2 -> Route53Resolver -> Because of the rule goes to Outgoing Endpoint -> These go to On Prem DNS1-2 -> Correct Private IP fetched. DONE
+ 
 ##  [DEMO] Implementing AWS & On-premises Hybrid DNS - PART2 (7:05)
 ##  [DEMO] Implementing AWS & On-premises Hybrid DNS - PART3 (16:25)
 ##  [DEMO] Implementing AWS & On-premises Hybrid DNS - PART4 (8:22)
 ##  Private Link (8:49)
+
 ##  IPv6 Capability in VPCs - PART1 (10:25)
 ##  IPv6 Capability in VPCs - PART2 (11:04)
 ##  Advanced VPC Structure - How Many AZs ? (11:53)
