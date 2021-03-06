@@ -221,7 +221,7 @@ Reads from cache are dependant on characteristics of ENI
 Backups manual or automatic 0-35 days retention. Unlike other products 0 days means NO AUTOMATIC BACKUP<p>
 
 ##  EFS Refresher (12:11)
-The Elastic File System (EFS) is a shared file system within AWS based on the Network File System (AWS implementation of **NFS**)<p>
+The Elastic File System (EFS) is a shared file system within AWS based on the Network File System (AWS implementation of **NFS**) (POSIX interface)<p>
 It can be mounted on Multiple linux EC2 instances, or on-premises servers as long as private networking exists between that network and AWS.<p>
 EBS is block storage (physical storage) while EFS is file storage (hierarchical storage) but seen by instances as if it was connected to the instance<p>
 Private Service via mount targets (ENIs) inside a VPC<p>
@@ -279,6 +279,8 @@ Smaller objects can be costly<p>
 S3 standard needs to stay there 30 days minimum<p>
 To transition an object from S3 to S3IA and then S3 Glacier with one rule it has to wait 30 days in standard, then 30 days in IA to go to glacier<p>
 BUT if we use two rules we could transition it without waiting 30 days in IA BUT using the billable period (so it can cost)<p>
+S3 to Glacier can go with 1 day delay<p>
+
 
 ##  [Refresher] S3 Replication (13:55)
 S3 supports Cross Region Replication and Same Region Replication for same accounts or different accounts<p>
@@ -352,22 +354,47 @@ I can choose any or none of the following, for Bucket default or each object ind
 2. Legal Hold. Set ON or OFF => No Deletes or Changes to object. Only user with s3:PutObjectLegalHold can set it to ON/OFF
 
 ##  [UPDATE202102] Amazon Macie (12:04)
-Amazon Macie is a fully managed data security and data privacy service that uses machine learning and pattern matching to discover and protect your sensitive data in AWS. It can discover,monitor and protect data stored in S3 buckets
-We enable it and point it to buckets within many AWS accounts, Macie discovers data categorized as PII (personally identifiable information), PHI (Personal Health Information) or financial data.
-Using data identifiers (rules that content is assesed against) (managed/built into the product with ML and AI or custom data identifiers - regex based)
+Amazon Macie is a fully managed data security and data privacy service that uses machine learning and pattern matching to discover and protect your sensitive data in AWS. It can discover,monitor and protect data stored in S3 buckets<p>
+We enable it and point it to buckets within many AWS accounts, Macie discovers data categorized as PII (personally identifiable information), PHI (Personal Health Information) or financial data.<p>
+Using data identifiers (rules that content is assesed against) (managed/built into the product with ML and AI or custom data identifiers - regex based)<p>
 
-Macie's discovery can be integrated with Security Hub or Event Bridge for automatic event driver remediation
+Macie's discovery can be integrated with Security Hub or Event Bridge for automatic event driver remediation<p>
 
-We configure a Macie Discovery Job, with a Discovery Schedule, to Detect and Classify N buckets, using managed and custom data identifiers, to produce findings to the console OR generate events to Event Bridge for remdeiation using Lambda
+We configure a Macie Discovery Job, with a Discovery Schedule, to Detect and Classify N buckets, using managed and custom data identifiers, to produce findings to the console OR generate events to Event Bridge for remdeiation using Lambda<p>
 
-On Custom Data Identifiers, refinements can be applied like keywords, Maximum Match Distance and Ignore Words 
+On Custom Data Identifiers, refinements can be applied like keywords, Maximum Match Distance and Ignore Words <p>
 
 Macie produces the following findings:
 1. Policy findings: Triggered when changes to an S3 bucket are done that reduce security or provide concerns (after Macie is enabled)
 2. Sensitive Data findings: When the following classifications of data are identified: Credentials, Sensitive Data, Medical Data etc
 
-##  EBS and Instance Store Performance - PART1 (12:06)
-##  EBS and Instance Store Performance - PART2 (11:38)
+##  EBS and Instance Store Performance - PART1,2 (12:06)
+EBS is network block storage, that can be used inside any OS as volumes (boot or data), completely independant to EC2 lifecycle (POSIX interface)<p>
+Provisioned in 1 AZ and accessed by that 1 AZ only, can be resized and snapshotted to S3, they are regionally resilient<p>
+They are attached to 1 EC2 instance except io1 which can multi attach => Attach to more than 1<p>
+EBS follows the EC2 instance if it goes to different host<p>
+EBS Volume Type and Size can massively impact performance<p>
+Instances has a max storage performance<p>
+Instance Store is a pysical disk in an EC2 host<p>
+Instance Store Data can be lost in the following cases:
+1. Hardware Failure
+2. Instance move to different EC2 host after a STOP and START of EC2
+   
+Instance store can't be resized as it is a physical disk, has the highest performance though (IOPS and MB/s) of anything that can connect to EC2 (locally connected)<p>   
+Instance Stored can be striped - Raid0 for high performance OR RAID1 for mirroring<p>
+
+Volumes:
+1. HDD based Volumes for large streaming workloads (cost/throughput optimized => Bits per second) - NOT FOR BOOT VOLUMES, BAD for (high IOPS, Low Latency)
+   1. st1, frequently accessed, throughput optimized (t for throughput - 40MiB/s/TiB - 500MiB/s/TiB Max - **500 Max IOPS**)
+   2. sc1, infrequently accessed, (c for coal - 12MiB/s/TiB - 250MiB/s/TiB Max - **250 Max IOPS**)
+2. SSD based Volumes for transactional workloads which involve frequent read/write operations / small bits of data (performance/IOPS optimized => Operations per second)
+   1. gp2, general performance, (1GiB-16TiB, **16000 Max IOPS** - 3 IOPS per GiB - min 100 IOPS) - IOPS linked to size
+   2. io1/io2, (4GiB-16TiB, **64000 Max IOPS**, 50 or 500 per GiB) - best for DBs SQL and NoSQL
+Instance Store: i3 ULTIMATE PERFORMANCE (1.6Million - 2million IOPS!!!)<p>
+I can create striped volumes (**Raid0**->double performance) which means i can make **2*64K->128K IOPS**<p>
+Also i can create mirrored volumes (**Raid1**->double resilience) which means i can make **2*64K->64K 2x resilience**<p>
+**EC2 Max** Instance Limit though is **160K IOPS**. So this is the maximum ever EC2 can use<p>
+For more than 160000 IOPS use Instance Store<p>
 ##  SECTION QUIZ - STORAGE SERVICES
 # COMPUTE, SCALING & LOAD BALANCING
 ##  [NEW] Regional and Global AWS Architecture (11:04)
