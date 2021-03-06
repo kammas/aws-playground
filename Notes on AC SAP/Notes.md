@@ -196,21 +196,176 @@ An internet Facing ALB needs to run from Public Subnets, HOWEVER it can communic
 ##  SECTION QUIZ - NETWORKING & HYBRID
 # STORAGE SERVICES
 ##  [Refresher] FSx for Windows File Server (11:34)
+FSx provides native windows file servers/shares for integration with windows environments using native Directory Service or Self-Managed AD<p>
+Single (1 subnet) or Multi AZ (subnets) within a VPC (HA)<p>
+Automatic and On-Demand backups<p>
+Accessible using VPC,Peering,VPN,DX, supports all windows FS does, windows permission model, de-duplication (sub file), DFS (Distributed file system), KMS at rest, enforced encryption in transit<p>
+Protocol is **SMB**, Supports also volume shadow copies (file versioning restored from client side)<p>
+Use case to act as the file system of Workspaces <p>
+Performance: up to 2Gb/sec, thousand IOPS, <1ms latency<p>
+
 ##  [NEW] FSx for Lustre (14:19)
+For HPC (ML/BI/Financial Modeling), done using Linux Clients, using **POSIX** **interface**<p>
+100Gb/Sec throughput & Sub millisec latency<p>
+Deployment Types:
+1. Scratch - Highest performance / Short term / NO HA / NO replication
+2. Persistent - Lower performance / Long Term / HA / Replication IN ONE AZ ONLY / Self Healing 
+
+Accessible using VPC,Peering,VPN,DX. <p>
+Requires HIGH BANDWIDTH<p>
+Usually there are EC2 Linux instances (clients) that access the Lustre File system over an ENI that is installed on the subnet (and optionally an S3 bucket)<p>
+Depending on the size of Lustre several Lustre File Servers are placed, which are the ones handling the requests. Each has also an in memory cache for frequent files<p>
+More storage => More servers => More aggregate throughput =>  More IOPS can be delivered over the ENI<p>
+Writes and Reads are not using cache and are dependant on performance characteristics of storage<p>
+Reads from cache are dependant on characteristics of ENI 
+Backups manual or automatic 0-35 days retention. Unlike other products 0 days means NO AUTOMATIC BACKUP<p>
+
 ##  EFS Refresher (12:11)
+The Elastic File System (EFS) is a shared file system within AWS based on the Network File System (AWS implementation of **NFS**)<p>
+It can be mounted on Multiple linux EC2 instances, or on-premises servers as long as private networking exists between that network and AWS.<p>
+EBS is block storage (physical storage) while EFS is file storage (hierarchical storage) but seen by instances as if it was connected to the instance<p>
+Private Service via mount targets (ENIs) inside a VPC<p>
+Accessible using VPC,Peering,VPN,DX. <p>
+Also accessible via Lambda if Lambda configured to use VPC networking, great option when there is Lambda temp storage limitation<p>
+Officially Linux ONLY<p>
+Performance Modes:
+1. General Purpose (default)
+2. Max IO (can use FSx Lustre though....) 
+
+Throughput Modes:
+1. Bursting mode (more random)
+2. Provisioned (steady)
+
+Storage Classes support also Lifecycle Policies:
+1. Standard 
+2. Infrequent Access
+
+
 ##  [DEMO] Implementing EFS - PART1 (9:08)
+Create file system -> Customize -> set mount targets (1 per AZ for HA) -> choose AZ/subnet/SG -> After creating i can check it is ready checking EFS/network IPs to see they are available to be mounted. then i add it to linux with<p>
+sudo yum -y install amazon-efs-utils<p>
+sudo mkdir -p /efs/wp-content  (replacing wp-content)<p>
+sudo nano /etc/fstab<p>
+file-system-id:/ /efs/wp-content efs _netdev,tls,iam 0 0 (replacing file-system-id with fs-xxxx)<p>
+
 ##  [DEMO] Implementing EFS - PART2 (12:52)
 ##  S3 Object Storage Classes - PART1 (9:23)
+S3 standard stores in 3 AZ (11 9s availability) - Price a)GB/m of data stored b)cost for transfer out, c)per 1000 requests - first byte latency can be publicly available<p>
+S3 standard IA, difference smaller cost per GB but retrieval fee, minimum duration for 30 days. Should be used for for data not accessed often, important or irreplaceable and large<p>
+S3 One zone IA, same as S3 IA, but with smaller cost and no resilience. durability is the same (if AZ does not fail). Should be used for for data not accessed often, replaceable and large<p>
+
+
+Http 200ok means it is stored succesfully<p>
 ##  [UPDATE20201110] S3 Object Storage Classes - PART2 (10:02)
+**S3 Glacier** can be retrieved a)expedited (5 minutes), b)standard (5 hours), c)bulk (12 hours)<p>
+They are moved to IA zone when retrieved. 90 day minimum duration <p>
+
+**S3 Glacier Deep Archive** can be retrieved within 48 hours<p>
+180 day minimum duration<p>
+
+**Intelligent Tiering** is monitoring usage of objects and does the move among tiers automatically<p>
+Intelligent Tiering has cost /100k objects and consists of:
+1. Frequent Access
+2. Infrequent Access
+3. Archive (90 day minimum)
+4. Deep Archive (180 day minimum)
+
+Ideal on Long Lived data when usage pattern changes a lot<p>
+
 ##  S3 Lifecycle Configuration (13:05)
+**Lifecycle Configuration** is a set of rules, which consist of Transition Actions (among classes) or Expiration Actions (delete objects or versions after X time)<p> 
+Can be applied to Buckets or group of objects using tags or prefixes<p>
+Smaller objects can be costly<p>
+S3 standard needs to stay there 30 days minimum<p>
+To transition an object from S3 to S3IA and then S3 Glacier with one rule it has to wait 30 days in standard, then 30 days in IA to go to glacier<p>
+BUT if we use two rules we could transition it without waiting 30 days in IA BUT using the billable period (so it can cost)<p>
+
 ##  [Refresher] S3 Replication (13:55)
+S3 supports Cross Region Replication and Same Region Replication for same accounts or different accounts<p>
+Source bucket is configured for the replication, along with an IAM role allowing S3 to assume it (so in its trust policy having S3 service) <p>
+This role's permission policy allows it to read objects from the source bucket and replicate objects to the destination bucket<p>
+
+For replication across different accounts the role needs to be trusted by the destination account<p>
+To do so we need to add a bucket policy (resource policy) in the destination account to allow the role in the source account, to replicate objects into it<p>
+
+replication can be done for 
+1. all objects or a subset using prefix or tags
+2. specific storage class (we can override the default and store objects to different-lower class for economy)
+3. ownership (default is source account but we can change that to be owned by destination account)
+
+Replication Time Control can guarantee that objects will be replicated within 15 minutes<p>
+Replication is not retroactive (applies from that moment onwards) and it is one way<p>
+Can replicate unencrypted, SSE-S3 (and also SSE-KMS with additional config)<p>
+Bucket owner should have permission to read objects for them to be replicated<p>
+Changes on S3 objects due to Lifecycle system events (expiration / moving to Glacier etc) will not be replicated and NO DELETES are replicated<p>
+
+Replication Use Cases
+1. SRR - Log aggregation
+2. SRR - Prod and Test Sync
+3. SRR - Resilience with strict sovereignty
+4. CRR - Global Resilience Improvements
+5. CRR - Latency Reduction
+
 ##  [Refresher] S3 Object Encryption - PART1 (10:08)
+Encryption is on an object level not bucket<p>
+Client side encryption all is done by client, S3 receives and stores scrambled data<p>
+Server side encryption s3 receives unencrypted data and encrypt them and splits as follows:
+1. SSE-C (Customer key) - Customer manages keys / S3 manages encryption / S3 storage - s3 receives (object+key), s3 stores (encrypted object+hash of the key)
+2. SSE-S3 (S3 Managed Key) - S3 manages keys / S3 manages encryption / S3 storage - s3 receives (object), s3 stores (encrypted object+encrypted key) - not suitable in cases a)need to own the keys, b)need to manage rotation time of keys, c)need not even an S3 Admin to access these
+3. SSE-KMS (Customer Master Key stored in KMS) - KMS+S3 manages keys / S3 manages encryption / S3 storage - s3 receives (object+plain text KMS key+encrypted KMS key based on CMK), s3 stores (encrypted object+encrypted key). I can choose a Customer Master Key i create, and choose the permissions on it and rotation and CloudTrail logs call towards that key . Since access to the initial Customer Master Key is needed S3 admins can not decrypt objects.** Customer Master Key decrypts the encrypted key and the decrypted key decrypts the object**
+
 ##  [Refresher] S3 Object Encryption - PART2 (11:38)
+Encryption: plain text + key + algorithm = cipher text<p>
+Decryption: cipher text + key + algorithm = plain text<p>
+
+Default bucket encryption: If x-amz-server-side-encryption header is used when storing object to S3 then server side encryption will be used<p>
+If i use AES256 (default) --> SSE-S3, If i use aws:kms SSE-KMS is used<p>
 ##  [REFRESHER] S3 Presigned URLs (10:57)
+Presigned URL's are a feature of S3 which allows the system to generate a URL with access permissions encoded into it, for a specific bucket and object, valid for a certain time period.<p>
+The person using an S3 bucket presigned URL acts as the person that generated the presigned URL. Can either download (GET) or upload (PUT)<p>
+Presigned URLs are used for a)offload media to S3 or b)serverless applications, c)access objects in private buckets<p>
+Presigned URL can be generated by anyone (even someone not having access to the object). This does not mean that access is granted when using it. At the time signed url is used the one that generated it needs to have access for presignedURL to function properly <p>
+When url is used permissions of the one accessing it match the permissions the one that generated it<p> 
+Don't generate with an IAM role as role's credentials may expire sooner than presigned url. Always i should use long term identities<p> 
+
 ##  [UPDATE202101] [DEMO] [Refresher] S3 Presigned URLs (19:12)
+Using AWS CLI<p> 
+similar to aws s3 presign s3://... --expires-in 180<p> 
+we will get a presigned url that is accessible for the next 3 minutes<p> 
+
 ##  [Refresher] S3 Select & Glacier Select (5:32)
+S3 can store infinite objects smaller than 5TB<p> 
+To reduce data usage and time, S3 and Glacier allows me to select using SQL-like statements, to retrieve part of the object, on CSV,JSON,Parquet (Bzip2 for csv,json)<p> 
+
 ##  S3 Object Lock (9:56)
+Object Lock is either enabled on bucket creation (along with versioning) OR i need to contact AWS support after it is created
+Object Lock implements a Write-Once-Read-Many (WORM). NO DELETE, NO OVERWRITE
+I can choose any or none of the following, for Bucket default or each object individually:
+1. Retention period (in days or years). 
+   1. Compliance Mode impact (even by root user)
+      1. Object can't be deleted or overwritten for the retention period
+      2. Retention period can't be reduced
+      3. Retention Mode can't be changed during Retention Period
+   2. Governance Mode
+      1. Object can't be deleted or overwritten for the retention period
+      2. Users with special permissions can bypass the Governance Mode by having a permission (s3:ByPassGovernanveRetention) and specifying a header (x-amz-bypass-governanve-retention:true - is default on console ui)
+2. Legal Hold. Set ON or OFF => No Deletes or Changes to object. Only user with s3:PutObjectLegalHold can set it to ON/OFF
+
 ##  [UPDATE202102] Amazon Macie (12:04)
+Amazon Macie is a fully managed data security and data privacy service that uses machine learning and pattern matching to discover and protect your sensitive data in AWS. It can discover,monitor and protect data stored in S3 buckets
+We enable it and point it to buckets within many AWS accounts, Macie discovers data categorized as PII (personally identifiable information), PHI (Personal Health Information) or financial data.
+Using data identifiers (rules that content is assesed against) (managed/built into the product with ML and AI or custom data identifiers - regex based)
+
+Macie's discovery can be integrated with Security Hub or Event Bridge for automatic event driver remediation
+
+We configure a Macie Discovery Job, with a Discovery Schedule, to Detect and Classify N buckets, using managed and custom data identifiers, to produce findings to the console OR generate events to Event Bridge for remdeiation using Lambda
+
+On Custom Data Identifiers, refinements can be applied like keywords, Maximum Match Distance and Ignore Words 
+
+Macie produces the following findings:
+1. Policy findings: Triggered when changes to an S3 bucket are done that reduce security or provide concerns (after Macie is enabled)
+2. Sensitive Data findings: When the following classifications of data are identified: Credentials, Sensitive Data, Medical Data etc
+
 ##  EBS and Instance Store Performance - PART1 (12:06)
 ##  EBS and Instance Store Performance - PART2 (11:38)
 ##  SECTION QUIZ - STORAGE SERVICES
