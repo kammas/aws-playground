@@ -398,11 +398,72 @@ For more than 160000 IOPS use Instance Store<p>
 ##  SECTION QUIZ - STORAGE SERVICES
 # COMPUTE, SCALING & LOAD BALANCING
 ##  [NEW] Regional and Global AWS Architecture (11:04)
-##  [NEW] EC2 Purchase Options - PART1 (9:26)
-##  [NEW] EC2 Purchase Options - PART2 (11:56)
+Netflix Global Application, Comprised of smaller Regional applications<p>
+
+Three main Architectures:
+1. Small scale, One Region - One Country
+2. One Region One Country but with DR Requirements across Regions
+3. Across Multiple Regions
+
+Global Elements:
+1. Global DNS using R53 for service discovery / Regional based Healths and Request Routing
+2. Cache content Globally on CDN Layer Cloudfront reading from Origin, as close to end users as possible
+
+Region Elements:
+1. ELB or API GW to route accoridngly (Web tier)
+2. EC2,Lambda,Containers (Compute Tier) - using Store Services (S3,EFC)
+3. RDS/Aurora/DynamoDB (DB Tier) combined with caching (DAX,Elasticache)
+4. App Services (SQS,SNS,Kinesis) 
+
+##  [NEW] EC2 Purchase Options - PART1,2 (9:26)
+EC2 Purchase Options:
+1. On Demand - Default, no interruption, no capacity reservation, predictable pricing, no upfront cost, no discount, short term unknown workloads. I can also use On-demand capacity reservations for X time, to make sure i will own EC2 at that time -> will pay this regardless of usage
+2. Spot - I pay the spot price even if my max is higher, for non time critical, things that can rerun, cost sensitive, anything stateless
+3. Reserved - Longterm consistent usage, reservation to an AZ or Region, in AZ reserves capacity, in Region does not reserve but benefits launches in Region,partial benefit launching a larger than reserved
+   1.  no upfront, 1-3 years,
+   2.  partial upfront, 1-3 years,
+   3.  all upfront (standard reserved), 1-3 years,
+   4.  scheduled reserved, not for all types and regions, minimum 1200 hours/year, minimum 1 year
+4. Dedicated Instances - Hardware is not shared with other AWS customers, but i do not own the host, extra charges for instances (really strict requirements)
+5. Dedicated Host - Paying for full host, for licensed software based on resources, host affinity -> instances remain on the same host supported, no instance charges, capacity management required
+
 ##  Reserved Instances - the rest (11:58)
+EC2 Delivery Order Capacity
+1. Reserved
+2. On Demand
+3. Spot
+
+EC2 Savings Plan
+1. EC2 Instance Savings Plans (specific size, specific hours per year, specific AZ or Region) (flexible size, OS, tenancy)
+2. Compute Savings Plans (flexible instance family, region, OS, tenancy, compute options)
+Beyond the commitment (e.g. 20$ per hour) On Demand is used
+
 ##  EC2 Networking (16:21)
+Any EC2 when launched are added a Primary ENI. This is removed when server is stopped. A Secondary ENI can be added to the EC2 ON THE SAME AZ BUT ON ANY SUBNET<p>
+Secondary ENI can be detached and attached to other EC2s. Also SGs are associate to an ENI not an EC2<p>
+Essentially we can have for an EC2 a Private Interface on Private Subnet for Management and a Public Interface on Public Subnet for Internet<p>
+Additionally we can protect the subnets with NACLs. ENIs have 1 Mac Address, N IPv6 Addresses, N SGs. IPv6 if enabled they are routable, and they are accessible on OS<p>
+Private IPv4 addresses of Primary or Secondary Instance (can have multiple private IPs for secondary - depending on EC2 size) are visible to the OS<p>
+Public IPv4 address,not visible to the OS,temporary for EC2 Lifecycle, is assigned to the Primary Interface of an EC2 Instance if:
+1. EC2 is launched in Subnet configured to allocate Public IPv4 addresses
+2. EC2 is launched with a Public IPv4 address
+
+**EIP (Elastic IP)** are allocated to the AWS account and are **associated with an EC2 Instance <--> its Primary ENI** and the non-elastic IP is released forever<p>
+EIPs are chargeable regardless if they are attached or not, to a running Instance or not<p>
+ 
+For each Instance having Multiple ENIs and multiple SGs, the traffic is evaluated against all SGs and if allowed it reaches EC2 <p>
+Each ENI does a SRC/DST check -> drops packets if the SRC or DST isn't ON that ENI. This needs to be disabled in cases like NAT instances (so disabling it on the Primary Interface of the NAT ENI) <p>
+If License is based on Mac address, i should use a secondary ENI to bind its MAC with the license and if i need to migrate it, will detach and attach it to the new EC2<p>
+
 ##  [NEW] Bootstrapping vs AMI Baking (17:09)
+Ready for Service or Complete: Means Users can use the Service as intended
+In general we want to provide the maximum flexibility but also the maximum deployment speed, to allow the App Configuration to be a separate stage/step than the Base Dependencies / Application / Application Updates => <p>
+Best option is to do the following:
+1. Provision a base EC2
+2. Perform the time consuming part of the APP install
+3. Create an AMI
+4. For new installations Customize AMI at launch time using User Data
+
 ##  [NEW] Elastic Load Balancer Architecture (ELB) - PART1 (10:26)
 ELB distribute connections of users to back-end services. Load Balancer created with a Single DNS record, type A record<p>
 Provisioning items for consideration:<p>
@@ -446,7 +507,15 @@ Free, Cool down large for cost effective, Smaller instances for granularity, ASG
 ##  ASG Lifecycle Hooks (5:24)
 ASG Lifecycle Hooks allows to configure custom actions that will take place on ASG actions (events launch/terminate transitions)<p>
 Adding a Lifecycle Hook on Launch or Terminate we can add two more intermediate states that will wait for X time OR until we run the "CompleteLifecycleAction" before the "InService" or "Terminate" state. This is accomplished with SNS, SQS or EventBridge receiving notifications (requires also a role and Notification metadata in lifecycle Hook edited accordingly)<p>
+
+## [AdvancedDemo] Architecture Evolution - STAGE1 - PART1 (13:06) 
+
 ##  EC2 Placement Groups (14:29)
+When you launch a new EC2 instance, the EC2 service attempts to place the instance in such a way that all of your instances are spread out across underlying hardware to minimize correlated failures. You can use placement groups to influence the placement of a group of interdependent instances to meet the needs of your workload. Depending on the type of workload, you can create a placement group using one of the following placement strategies:
+1. Cluster (best network performance) – packs instances close together inside an Availability Zone. This strategy enables workloads to achieve the low-latency network performance necessary for tightly-coupled node-to-node communication that is typical of HPC applications. Launching ALL at the same time is preferrable (10Gbps vs 5 Gbps). ALWAYS ENHANCED NETWORKING. ONE AZ ONLY. Ideally same VPC and same Instance Type
+2. Spread (maximum non-scalable availability and resilience) – strictly places a small group of instances across distinct underlying hardware to reduce correlated failures. MULTIPLE AZs, Each EC2 is on a different Rack (different network and power source), Limit of 7 Instances per AZ => 6*7=42 Instances Max. DEDICATED HOSTS OR INSTANCES NOT SUPPORTED. Use Case small number of critical instances that need to be kept separated from each other
+3. Partition (best scalable availability and resilience) – Like Spread but using N instances instead of 1. Spreads your instances across logical partitions such that groups of instances in one partition do not share the underlying hardware with groups of instances in different partitions. This strategy is typically used by large distributed and replicated workloads, such as Hadoop, Cassandra, and Kafka. MULTIPLE AZs, Each **GROUP OF EC2/Partition** is on a different Rack (different network and power source), Limit of 7 GROUP OF EC2/PARTITION per AZ => 6*7=42 GROUP OF Instances Max. DEDICATED HOSTS OR INSTANCES NOT SUPPORTED.
+
 ##  SECTION QUIZ - COMPUTE, SCALING & LOAD BALANCING
 # MONITORING, LOGGING & COST MANAGEMENT
 ##  CloudWatch-PART1 (10:00)
