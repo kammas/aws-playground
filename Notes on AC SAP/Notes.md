@@ -99,13 +99,28 @@ e.g. Total links==4, minimumLinks==2, if  active links are 2-> LAG is Active, if
 Direct Connect is a regional service, connecting Customer Premises to 1+ DX Locations
 Public VIF can access all AWS Public Regions
 Private VIFs can access VPCs in the same Region via VGW's (as default - there are workarounds)
+Maximum 10 VGW attachments to a DX Gateway
+1 DX up to 50 Private VIFs
+1 DX Gateway up to 3 TGWs
 
 **Public VIF:**
 Router in on premises initially has 0.0.0.0/0 to use Public Internet Connectivity
 After Connecting On Prem to DX Location, and enabling BGP, Adress space for public spaces of AES for all regions is advertised via BGP => More specific routes are defined => The routing will prefer the Direct Connect => Higher performance than using Public Internet
 
 **Private VIF:**
+**W/O DX Gateway** (if we have only one region):
+AWS Region <-> VGW <-> AWS DX Router <-> crossConnect Cable <-> Customer or Provider DX Router <-> Customer Premises Router + Private VIF from On prem to VPC VGW
 
+**With DX Gateway** which is a Global Network Device (to peer-connect to multiple regions - NO TRANSIT - just all VPCs to On Prem):
+AWS Region1 VGW <-> DX Gateway <-> AWS Region2 VGW 
+Region VPC <-> AWS VGW <-> DX Gateway <-> private VIF <-> On Prem Router
+On Prem will receive BGP advertisements for all VPCs via the DX Gateway
+
+**With DX Gateway and Transit Gateway** which are both Global Network Devices (for transitive multi region):
+AWS Region1  <-> TGW <-> AWS Region2 VGW
+DX Gateway1 <-> TGW - Transit VIF <-> DX Gateway2 
+Region VPC <-> AWS VGW <-> DX Gateway <-> private VIF <-> On Prem Router
+On Prem will receive BGP advertisements for all VPCs via the DX Gateway, that will have receive them via the TGWs
 
 ##  [Refresher] Domain Name System (DNS) Fundamentals - PART1 (11:40)
 ##  [Refresher] Domain Name System (DNS) Fundamentals - PART2 (10:04)
