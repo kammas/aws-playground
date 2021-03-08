@@ -86,6 +86,28 @@ SCPs are Account Permissions Boundaries and Limit what the account can do<p>
 ##  Site2SiteVPN Refresher (18:00)
 ##  Transit Gateway Refresher (10:04)
 ##  Advanced VPC Routing - PART1 (11:29)
+**NACLs** are used IN and OUT of a Subnet. (**stateless**) - Rule/Type/Protocol/Port Range/Source/Allow-Deny Inbound/Outbound (e.g 100/All Traffic/Protocol/Port Range/Source/A-D). Usually open for IN X port and for OUT ephemeral ports (1024-65535)<p>
+**SGs** are used IN of an Instance or Resource (**statefull**) - Type/Protocol/Port Range/Destination (e.g. All Traffic / Http / 80 / 0.0.0.0/0)<p>
+Subnets associate to ONLY 1 Route Table, Either the VPC Main RT or a custom<p>
+RT handle differently IPv4 and IPv6<p>
+Routes send traffic based on destination (default, network CIDR,IP CIDR) to a target (where it will be sent)<p>
+Limit of 50 static routes and 100 dynamic routes<p>
+
+RT Priority:
+1. Longest (more specific) Destination wins
+2. Static Route
+3. Propagated Route
+4. DX
+5. VPN Static
+6. VPN BGP
+7. AS Path (via BGP the distance - shortest wins)
+**Internet Gateway (IGW):** The Amazon VPC side of a connection to the public Internet.<p>
+**NAT Gateway:** A highly available, managed Network Address Translation (NAT) service for your resources in a private subnet to access the Internet.<p>
+**Virtual private gateway (VGW):** The Amazon VPC side of a VPN connection.<p>
+Reverse Proxy - Ingress Routing<p>
+Gateway Route Tables (for VGW or IGW)<p>
+The final destination is known only to the GW<p>
+
 ##  Advanced VPC Routing - PART2 (11:51)
 ##  Accelerated Site-to-Site VPN (9:55)
 ##  [NEW][AdvancedDEMO] Advanced Site-to-Site VPN - STAGE1 (11:56)
