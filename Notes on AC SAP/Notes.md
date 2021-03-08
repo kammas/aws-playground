@@ -30,6 +30,23 @@
 ##  Policy Interpretation Deep Dive - Example 2 (9:21)
 ##  Policy Interpretation Deep Dive - Example 3 (11:14)
 ##  Permissions Boundaries & Use-cases (17:20)
+Permission Boundaries define the maximum permissions an identity can receive - they don't grant any access<p>
+Permission Boundaries can be applied to IAM Users or IAM Roles<p>
+Resource policies will be applied to full, but Identity permissions will be reduced according to boundaries<p>
+Permission Boundaries are used e.g. to administrators so as to have limited capabilities even though they are administrators<p>
+Admin Boundary: This is accomplished by e.g  assigning an "allow * on IAM" but use 2 boundaries, 1 to allow to manage password etc only on same user and boundary of specific allowed IAM Actions<p>
+
+**Effective Permissions of a User or Role** are "Permissions Boundaries" INTERSECTION "Identity Based Policy"<p>
+
+**Service Control Policy (SCP)** is a json document (policy) that can be attached to an OR, OU or Account<p>
+The policy impacts all children including root user (if he is not the top root)<p>
+SCP reduces the account capabilities in total (account boundary)<p>
+Provides Allows or Denies. Default is all Allow (which is the same as if there is no SCP)<p>
+SCPs are Account Permissions Boundaries and Limit what the account can do<p>
+
+**Effective Permissions of Identities in an account with SCP** are "What is allowed in a SCP" INTERSECTION "Identity Policies in Accounts"<p>
+
+
 ##  AWS Permissions Evaluation (10:14)
 ##  [DEMO] Cross Account Access to S3 - SETUP (10:54)
 ##  [DEMO] Cross Account Access to S3 - PART1 (13:36)
@@ -96,31 +113,31 @@ Maximum 4 connections per LAG, all of the same speed, all terminate in same loca
 LAG has minimumLinks attribute, which define the minimum connections that should be active for the LAG to be considered as Active<p>
 e.g. Total links==4, minimumLinks==2, if  active links are 2-> LAG is Active, if active Links are 1-> LAG is not active<p>
 ##  Direct Connect Gateway, TGW and Transit VIFS (13:52)
-Direct Connect is a regional service, connecting Customer Premises to 1+ DX Locations
-Public VIF can access all AWS Public Regions
-Private VIFs can access VPCs in the same Region via VGW's (as default - there are workarounds)
-Maximum 10 VGW attachments to a DX Gateway
-1 DX up to 50 Private VIFs
-1 DX Gateway up to 3 TGWs
+Direct Connect is a regional service, connecting Customer Premises to 1+ DX Locations<p>
+Public VIF can access all AWS Public Regions<p>
+Private VIFs can access VPCs in the same Region via VGW's (as default - there are workarounds)<p>
+Maximum 10 VGW attachments to a DX Gateway<p>
+1 DX up to 50 Private VIFs<p>
+1 DX Gateway up to 3 TGWs<p>
 
-**Public VIF:**
-Router in on premises initially has 0.0.0.0/0 to use Public Internet Connectivity
-After Connecting On Prem to DX Location, and enabling BGP, Adress space for public spaces of AES for all regions is advertised via BGP => More specific routes are defined => The routing will prefer the Direct Connect => Higher performance than using Public Internet
+**Public VIF:**<p>
+Router in on premises initially has 0.0.0.0/0 to use Public Internet Connectivity<p>
+After Connecting On Prem to DX Location, and enabling BGP, Adress space for public spaces of AES for all regions is advertised via BGP => More specific routes are defined => The routing will prefer the Direct Connect => Higher performance than using Public Internet<p>
 
-**Private VIF:**
-**W/O DX Gateway** (if we have only one region):
-AWS Region <-> VGW <-> AWS DX Router <-> crossConnect Cable <-> Customer or Provider DX Router <-> Customer Premises Router + Private VIF from On prem to VPC VGW
+**Private VIF:**<p>
+**W/O DX Gateway** (if we have only one region):<p>
+AWS Region <-> VGW <-> AWS DX Router <-> crossConnect Cable <-> Customer or Provider DX Router <-> Customer Premises Router + Private VIF from On prem to VPC VGW<p>
 
-**With DX Gateway** which is a Global Network Device (to peer-connect to multiple regions - NO TRANSIT - just all VPCs to On Prem):
-AWS Region1 VGW <-> DX Gateway <-> AWS Region2 VGW 
-Region VPC <-> AWS VGW <-> DX Gateway <-> private VIF <-> On Prem Router
-On Prem will receive BGP advertisements for all VPCs via the DX Gateway
+**With DX Gateway** which is a Global Network Device (to peer-connect to multiple regions - NO TRANSIT - just all VPCs to On Prem):<p>
+AWS Region1 VGW <-> DX Gateway <-> AWS Region2 VGW <p>
+Region VPC <-> AWS VGW <-> DX Gateway <-> private VIF <-> On Prem Router<p>
+On Prem will receive BGP advertisements for all VPCs via the DX Gateway<p>
 
-**With DX Gateway and Transit Gateway** which are both Global Network Devices (for transitive multi region):
-AWS Region1  <-> TGW <-> AWS Region2 VGW
-DX Gateway1 <-> TGW - Transit VIF <-> DX Gateway2 
-Region VPC <-> AWS VGW <-> DX Gateway <-> private VIF <-> On Prem Router
-On Prem will receive BGP advertisements for all VPCs via the DX Gateway, that will have receive them via the TGWs
+**With DX Gateway and Transit Gateway** which are both Global Network Devices (for transitive multi region):<p>
+AWS Region1  <-> TGW <-> AWS Region2 VGW<p>
+DX Gateway1 <-> TGW - Transit VIF <-> DX Gateway2 <p>
+Region VPC <-> AWS VGW <-> DX Gateway <-> private VIF <-> On Prem Router<p>
+On Prem will receive BGP advertisements for all VPCs via the DX Gateway, that will have receive them via the TGWs<p>
 
 ##  [Refresher] Domain Name System (DNS) Fundamentals - PART1 (11:40)
 ##  [Refresher] Domain Name System (DNS) Fundamentals - PART2 (10:04)
@@ -1224,6 +1241,3 @@ Glue Jobs:
 
 DataPipelines is what was used before Glue and is not Serverless. Requires instances to run but is similar<p>
 ##  Device Farm (4:19)
-
-
-
