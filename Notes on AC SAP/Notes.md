@@ -81,8 +81,32 @@
 ##  Direct Connect Refresher - PART1 (13:12)
 ##  Direct Connect Refresher - PART2 (9:30)
 ##  Direct Connect Resilience (14:07)
+AWS Region, connected with multiple DX Locations (AWS-Datacenter) by redundant high speed connections<p>
+AWS Region <-> AWS DX Router and using a Cross Connect cable, <-> Customer or Provider DX Router <-> Customer Premises Router <p> 
+For Resilience we need:
+2 AWS DX Routers in the DX Location <-> cross connect 2 Customer DX Routers <-> 2 Customer Premises Routers <p>
+(idealy 2 different DX Locations, 2 different Customer premises, 2 different Telco Provider cables)<p>
+even beter with 4 AWS DX Routers <-> 4 customer DX routers <-> 4 customer premises routers<p>
 ##  DX LAGS (5:44)
+Direct Connect **Link Aggregation Groups (LAG)** are a way to combine individual direct connects into a faster logical connection (e.g. merge 3x10Gbps to a 30GBps)<p>
+They improve managability and speed and are NOT designed for resilience.<p>
+They can help only on smaller cables such as cables<p>
+LAG == SPEED != RESILIENCE<p>
+Maximum 4 connections per LAG, all of the same speed, all terminate in same location<p>
+LAG has minimumLinks attribute, which define the minimum connections that should be active for the LAG to be considered as Active<p>
+e.g. Total links==4, minimumLinks==2, if  active links are 2-> LAG is Active, if active Links are 1-> LAG is not active<p>
 ##  Direct Connect Gateway, TGW and Transit VIFS (13:52)
+Direct Connect is a regional service, connecting Customer Premises to 1+ DX Locations
+Public VIF can access all AWS Public Regions
+Private VIFs can access VPCs in the same Region via VGW's (as default - there are workarounds)
+
+**Public VIF:**
+Router in on premises initially has 0.0.0.0/0 to use Public Internet Connectivity
+After Connecting On Prem to DX Location, and enabling BGP, Adress space for public spaces of AES for all regions is advertised via BGP => More specific routes are defined => The routing will prefer the Direct Connect => Higher performance than using Public Internet
+
+**Private VIF:**
+
+
 ##  [Refresher] Domain Name System (DNS) Fundamentals - PART1 (11:40)
 ##  [Refresher] Domain Name System (DNS) Fundamentals - PART2 (10:04)
 ##  [Refresher] Route53 (R53) Fundamentals (6:06)
@@ -433,6 +457,17 @@ EC2 Delivery Order Capacity
 2. On Demand
 3. Spot
 
+Classes:
+1. General Purpose
+   1. Mac - macOS
+   2. T4 (support Nitro) 40% better than T3
+   3. T3 (support Nitro) 30% better than T2
+2. Compute (C)
+3. C6 (compute optimize)
+4. Memory Optimized (R, X)
+5. Accelerated Computing GPU (P,I,G)
+6. Storage Optimize (I,D)
+
 EC2 Savings Plan
 1. EC2 Instance Savings Plans (specific size, specific hours per year, specific AZ or Region) (flexible size, OS, tenancy)
 2. Compute Savings Plans (flexible instance family, region, OS, tenancy, compute options)
@@ -511,7 +546,7 @@ Adding a Lifecycle Hook on Launch or Terminate we can add two more intermediate 
 ## [AdvancedDemo] Architecture Evolution - STAGE1 - PART1 (13:06) 
 
 ##  EC2 Placement Groups (14:29)
-When you launch a new EC2 instance, the EC2 service attempts to place the instance in such a way that all of your instances are spread out across underlying hardware to minimize correlated failures. You can use placement groups to influence the placement of a group of interdependent instances to meet the needs of your workload. Depending on the type of workload, you can create a placement group using one of the following placement strategies:
+When you launch a new EC2 instance, the EC2 service attempts to place the instance in such a way that all of your instances are spread out across underlying hardware to minimize correlated failures. You can use placement groups to influence the placement of a group of interdependent instances to meet the needs of your workload.<p> Depending on the type of workload, you can create a placement group using one of the following placement strategies:
 1. Cluster (best network performance) – packs instances close together inside an Availability Zone. This strategy enables workloads to achieve the low-latency network performance necessary for tightly-coupled node-to-node communication that is typical of HPC applications. Launching ALL at the same time is preferrable (10Gbps vs 5 Gbps). ALWAYS ENHANCED NETWORKING. ONE AZ ONLY. Ideally same VPC and same Instance Type
 2. Spread (maximum non-scalable availability and resilience) – strictly places a small group of instances across distinct underlying hardware to reduce correlated failures. MULTIPLE AZs, Each EC2 is on a different Rack (different network and power source), Limit of 7 Instances per AZ => 6*7=42 Instances Max. DEDICATED HOSTS OR INSTANCES NOT SUPPORTED. Use Case small number of critical instances that need to be kept separated from each other
 3. Partition (best scalable availability and resilience) – Like Spread but using N instances instead of 1. Spreads your instances across logical partitions such that groups of instances in one partition do not share the underlying hardware with groups of instances in different partitions. This strategy is typically used by large distributed and replicated workloads, such as Hadoop, Cassandra, and Kafka. MULTIPLE AZs, Each **GROUP OF EC2/Partition** is on a different Rack (different network and power source), Limit of 7 GROUP OF EC2/PARTITION per AZ => 6*7=42 GROUP OF Instances Max. DEDICATED HOSTS OR INSTANCES NOT SUPPORTED.
@@ -550,8 +585,39 @@ Exporting logs from Cloudwatch to S3 can take up to 12 hours (not real time) and
 For near-realtime storage of logs Kinesis Firehose can be used as the destination of Subscription Filters, and for realtime to Lambda or Kinesis Streams<p>
 For generating a cloud watch Metric a Metric Filter can be used<p>
 ##  [Refresher] CloudTrail Refresher (14:10)
+CloudTrail Is a product which logs API calls and account events as a Cloud Trail Event and is REGION SPECIFIC BUT A TRAIL CAN BE SET ALSO TO APPLY TO ALL REGIONS<p>
+Global Services log to us-east-1 (Global Service Events)<p>
+It's very often used to diagnose security or performance issues, or to provide quality account level traceability.<p>
+It is enabled by default in AWS accounts and logs free information with a 90 day retention.<p>
+It can be configured to store data indefinitely in S3 or CloudWatch Logs.<p>
+To customize the service i can create 1 or more Trails that will be logging Management Event (management operations or such as creating VPC, terminating EC3 ) and/or Data Events (Resource Operations ON A RESOURCE such as Trigger of a Lambda, S3 object was accessed etc)<p>
+CloudTrail generated logs can be stored as compressed json files to S3 and parsed by any tooling able to read JSON files and/or to CloudWatch logs to Search or take actions based on Metric Filters<p>
+Organizational Trail can also be created from the master account of the organization, logging for all Accounts of the Organization to a single point.<p>
+CloudTrail is NOT REAL TIME. Approximately 15 minutes delay max.<p>
+To configure a Trail we will also need an IAM Role to allow Cloud Trail to send data to CloudWatch<p>
+
 ##  [DEMO] Setting up an Organisational Trail (17:53)
+When asking to create trail and store data on a new S3 bucket the bucket policy is modifies accordingly to allow access from CloudTrail to S3 bucket<p>
 ##  AWS X-Ray (6:42)
+AWS X-Ray helps developers analyze and debug production, distributed applications, such as those built using a microservices architecture. <p>
+With X-Ray, you can understand how your application and its underlying services are performing to identify and troubleshoot the root cause of performance issues and errors. <p>
+X-Ray provides an end-to-end view of requests as they travel through your application, and shows a map of your application’s underlying components.<p>
+A Tracing header is generated by the first service and it is passed along to other services to show the session flow (distributed tracing)
+Segments (trace info such as IP, host, request,response,browser, start and end times etc) are send to XRAY
+Subsegments are more granular data of the above, calls to other endpoints etc
+Service Graps is generated using the above which is a JSON document describing how all the services and resources work together
+XRay console uses the Service Graph + the data collected to generate a Service Map (visual representation of the Service Graph)
+Accessing XRAY app--> Tracing Header generated ->Segment is generated-> next service etc
+Service map shows the Flow through a Distributed app, Response time, Requests and any errors or issues
+To enable X-Ray:
+1. For EC2 - install X-Ray Agent
+2. For ECS - Install X-Ray Agent in tasks
+3. For Lambda - Enable Option
+4. Beanstalk - Agent is preinstalled
+5. API Gateway - per stage option
+6. SNS & SQS can be used as well
+7. IAM Permissions (e.g. Lambda execution role is provided with the permissions required to send data to X-Ray )
+
 ##  Cost Allocation Tags (4:43)
 ##  Trusted Advisor (8:35)
 **Trusted Advisor** is a tool that provides real time guidance regarding best practices in relation to your resources with topics such as:
@@ -1056,6 +1122,21 @@ AWS CDK, i can write on javascript/typescript/python/java/.net. Reusability. Sup
 ##  CloudFormation Stack Roles (6:52)
 ##  Service Catalog (7:25)
 ##  CI/CD using AWS Code* (15:29)
+CODE - BUILD - TEST - DEPLOY
+CodeCommit - Code Build (+test) - Code Deploy
+Development Pipeline orchstrates these tools easilly
+Pipeline is for ONE AND ONLY ONE branch
+buildspec.yml or .json (Used frode Build to build and test)
+appspec.yml or .json (Used from the CodeDeploy to deploy)
+CodeDeploy can deploy to:
+1. Using one or more DOne or more EC2 using deployment group
+2. Elastic Beanstalk or AWS OptsWorks
+3. AWS Cloudformation
+4. ECS or ECS (Blue/Green())
+5. Service Catalogs
+6. Alexa Skills Kit
+7. S3
+
 ##  Elastic Beanstalk (18:47)
 ##  [NEW] OpsWorks (15:56)
 ##  AWS Systems Manager - Agent Architecture (7:39)
@@ -1081,6 +1162,16 @@ AWS CDK, i can write on javascript/typescript/python/java/.net. Reusability. Sup
 ##  [Refresher] AWS Secrets Manager (7:47)
 ##  VPC Flow Logs & Flow Logs vs Packet Sniffing (11:16)
 ##  [Refresher] AWS WAF and Shield (12:57)
+AWS Shield provides protection against DDoS Attacks (blocks service from legitimate users by overloading system)
+**Shield Standard** is Free with **Route 53 and Cloudfront** and protects against Layr 3 and Layr 4 attacks
+**Shield Advanced** provides protection to **EC2, ELB, Global Accelerator, Route 53 and CloudFront** and DDoS Response Team and Financial Insurance
+WAF (Web application Firewall) is a Layer 7 protection so understands Http and Https, Like SQL Injection , Cross site scripting, Geo Blocking, Rate Awareness
+WEBACL (Web Access Control List) of **WAF** is integrated with **ALB, API Gateway and CloudFront**
+Rules are added to WEBACL and are evaluated when traffic arrives
+Route 53 with Shield -> CF with Shield -> CF with WAF rules - WEBACL filters traffic - ALB Shield and WAF -> EC2 to ASG
+
+
+
 ##  Section Quiz - ADVANCED SECURITY AND CONFIG MANAGEMENT
 # DISASTER RECOVERY & BUSINESS CONTINUITY IN AWS
 ##  Types of DR - Cold, Warm, PilotLight (17:41)
