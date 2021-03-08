@@ -1019,9 +1019,30 @@ Scenarios for Kinesis Analytics:
 3. Real time metrics (Security and Response teams)
 
 ##  MapReduce 101 (10:24)
+Map Reduce is a Data Analysis Architecture which allows for the huge scale, parallel processing<p>
+Phases:
+1. MAP: Data separated to splits. Each Split assigned to a mapper which are the main compute (e.g. count Key/Value, then Shuffle based on Keys). If the processing of a split fails, it can be retried. 
+2. REDUCE: When all splits are processed, data can be recombined into Results (count per Key)-> Final Output Data
 
-
+Hadoop File System (HDFS), Highly Fault tolerant, replicated storage between nodes<p>
+Name Node provides the namespace for file system and controls access to HDFS<p>
+Block is a segment of data on HDFS (64MB)<p>
 ##  EMR Architecture (13:51)
+Amazon EMR is a managed implementation of Apache Hadoop for handling big data workloads using the Map Reduce framework<p>
+Benefit of EMR is that it can be used both long term or for ad-hoc transient clusters<p>
+Runs in one AZ in a VPC using EC2 for compute <p>
+EMR can use and auto scale: Spot Instances, Instance Fleet, Reserved, On-demand<p>
+Used for Big-data processing, analytics, transformation and more (used also by data pipeline product)<p>
+EMR Cluster Reads and Writes data to S3<p>
+EMRFS is a resilient file system supported natively within EMR, backed by S3, resilient to Core Node Failure. <p>
+
+Every cluster has:
+1. 1 Master Node. This node manages cluster and its health. Distributes workloads and ascts as the NAME node within MapReduce. Allows to SSH to the cluster. 
+2. 0-N Core Nodes. They act as data nodes for HDFS based on local storage volumes  - used for extreme levels of IO -  (or EMRFS), run task trackers and run mapping and reduce tasks in the cluster. Need to be as stable as possible 
+3. 0-M Task Nodes. They have no HDFS invovement and just run the tasks. Ideal for **SPOT** based scaling
+
+
+
 ##  Redshift Architecture (11:32)
 Petabyte scle data warehouse, OLAP (column based), analyze aggregate data<p>
 Federated query across different DBs, connects qith Quicksight<p>
@@ -1043,7 +1064,49 @@ Backups
 1. Cross region if configured to copy S3 across regions
 
 ##  AWS Batch (14:44)
+Managed compute service for large scale data analytics and processing<p>
+Used for jobs that can run without end user interaction or can be scheduled to run as resources permit<p>
+Handles the underlying compute and orchestration<p>
+Batch Components:
+1. AWS Batch Job - A script, executable or docker container that will be run and can also be dependant on other jobs
+2. Job Definition - Metadata for a Job (IAM permissions, Resource Config, Mount Points)
+3. Job Queue - Jobs are submitted to a queue where they wait for comput environment capacity. Queues are associated with 1+ compute environments
+4. Compute Environment Managed or Unmanaged - Configure instance type/size, vCPU amount,spot price or provide details of a compute environment i manage (ECS)
+
+In general AWS Batch deployment in our VPC -> Add a Job and Job Definitions -> jobs are submitted to queues having different priorities -> Resources are used processing the jobs based on priority and availability<p>
+Batch vs Lambda
+1. Infinite vs 15m max time
+2. Space unlimited (EBS) vs 512mb (for public lambda)
+3. Space unlimited (EBS) vs unlimited EFS (for VPC networking Private Lambda)
+4. Docker vs few programming languages
+5. not serverless vs serverless
+6. no time limit 
+
+Managed vs Unmanaged 
+1. Choose On-Demand, Spot Instances size/type, max spot price vs i manage everything
+
 ##  AWS Quicksight (4:08)
+Quicksight is a tool used for Business Analysis and Business Intelligence, that provides Ad-Hoc analysis and Visualizations<p>
+Connect Quicksight to data sources -> Transform Data -> Prepare Analysis -> Decide
+Sources can be
+1. Athena
+2. Aurora
+3. Redshift
+4. Redshift Spectrum
+5. S3
+6. AWS IOT
+7. Jira
+8. Github
+9. Twitter
+10. Salesforce
+11. MSSql Server
+12. MySQL
+13. Postgre
+14. Spark
+15. Snowflake
+16. Presto
+17. Terradata
+
 ##  SECTION QUIZ - DATA ANALYTICS
 # APP SERVICES, CONTAINERS & SERVERLESS
 ##  [Refresher] Introduction to containers (17:13)
