@@ -1142,10 +1142,10 @@ EC2 and Fargate Mode Management components:
 3. ClusterManager
 4. PlacementEngine
 
-EC2 Mode -> EC2 instances run containers -> ASG controls size
-Fargate Mode -> Containers are running in Fargate Shared Infrastructure
+EC2 Mode -> EC2 instances run containers -> ASG controls size<p>
+Fargate Mode -> Containers are running in Fargate Shared Infrastructure<p>
 
-While in EC2 mode the containers are within your VPC, in Fargate mode ENIs are injected to my VPC and connectivity is done through them, it can also have Public Internet access if VPC is configured as such
+While in EC2 mode the containers are within your VPC, in Fargate mode ENIs are injected to my VPC and connectivity is done through them, it can also have Public Internet access if VPC is configured as such<p>
 
 EC2 mode for:
 1. Large workload
@@ -1157,9 +1157,14 @@ Fargate mode for:
 3. Batch/Periodic workloads
 
 ##  [DEMO][Refresher] - Deploying 'container of cats' using Fargate (16:08)
-Create Cluster / Create Task Definition / Add Container / Run Task of Cluster / Deregister Task Definition / Delete Cluster
-
+Create Cluster / Create Task Definition / Add Container / Run Task of Cluster / Deregister Task Definition / Delete Cluster<p>
 ##  [Refresher] Simple Notification Service (SNS) (7:49)
+HA/Durable/Secure/Pub-Sub/Public Service that Coordinates the sending and delivery of messages up to 256KB
+
+SNS Topics contain permissions and configuration
+
+Publishers like applications, Cloudwatch (alarms), CloudFormation (stack changes state), ASG (when scaling event) send messages to topics and Subscribers receive them using HTTP(s),Email (JSON),SQS,Mobile Push, SMS Messagesd, Lambda
+
 ##  [Refresher] Simple Queue Service [SQS] (15:46)
 ##  Amazon MQ (8:15)
 ##  AWS Lambda In-depth - PART1 (11:08)
