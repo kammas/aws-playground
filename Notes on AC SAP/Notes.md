@@ -1159,18 +1159,87 @@ Fargate mode for:
 ##  [DEMO][Refresher] - Deploying 'container of cats' using Fargate (16:08)
 Create Cluster / Create Task Definition / Add Container / Run Task of Cluster / Deregister Task Definition / Delete Cluster<p>
 ##  [Refresher] Simple Notification Service (SNS) (7:49)
-HA/Durable/Secure/Pub-Sub/Public Service that Coordinates the sending and delivery of messages up to 256KB
-
-SNS Topics contain permissions and configuration
-
-Publishers like applications, Cloudwatch (alarms), CloudFormation (stack changes state), ASG (when scaling event) send messages to topics and Subscribers receive them using HTTP(s),Email (JSON),SQS,Mobile Push, SMS Messagesd, Lambda
+HA/Durable/Secure/Pub-Sub/Public Service that Coordinates the sending and delivery of messages up to 256KB<p>
+SNS Topics contain permissions and configuration<p>
+Publishers like applications, Cloudwatch (alarms), CloudFormation (stack changes state), ASG (when scaling event) send messages to topics and Subscribers receive them using HTTP(s),Email (JSON),SQS,Mobile Push, SMS Messagesd, Lambda<p>
+Filters can be applied so that subscribers receive not all messages<p>
+Fanout -> 1 SNS -> N SQS (e.g. for processing the same thing in N slightly different ways - images small/mid/high)<p>
+SNS supports delivery status and retries, it is HA and Scalable within a Region<p>
+Capable of SSE (Server Side Encryption) for Encryption of Data in disk<p>
+Cross-Account capabilities via TOPIC Policies<p>
 
 ##  [Refresher] Simple Queue Service [SQS] (15:46)
+Managed Public Service / HA / up to 256kb messages<p>
+
+Standard type queues (at least once) <p>
+FIFO type queues guarantee an order (exactly once) / limited performance / max 300-3000 messages per sec<p>
+
+Billing based on requests +> short polling that will very fast return a response on a close to zero length queue will be less cost effective than long polling which waits for "waitTimeSeconds" until a message arrives<p>
+
+Clients can send messages to the queue and other clients can poll that queue<p>
+Messages that are fetched from the queue are hidden for a VisibilityTimeout period of time. If processed succesfully the client will delete it, otherwise automatically will reappear in the queue. <p>
+ASG can scale based on queue size => Allows us to build complex worker pool style architectures<p>
+
+e.g. ASG Web Pool to upload videos scales by CPU. Video goes to S3, Message to SQS. ASG Worker Pool scales based on SQS Queue size. Processes the message which has the S3 file <p>url, => file is being processed <p>
+OR
+ASG Web pool uploads to S3, S3-> SNS -> SQS Fan out -> Multiple Workers based on queue size<p>
+
+Supports encryption at rest (KMS) and in transit<p>
+
+Access to a queue is permitted using identity policies/resource policies (from the same account) queue policies from external account<p>
 ##  Amazon MQ (8:15)
+Open source message broker, based on Apache Active MQ, JMS API , AMQP, MQTT, OpemnWire, STOMP compatibility<p>
+Runs on a VPC - Private networking required - Can choose Single Instance or HA pair (Active/Standby)<p>
+Usual architecture for migration:<p>
+On Prem message producer -> Active MQ Broker On Prem -> DX or Site-to-site VPN -> HA Primary/Standby Active MQ using EFS across zones<p>
+
 ##  AWS Lambda In-depth - PART1 (11:08)
+FaaS Function as a service, Function uses a runtime (e.g. Python 3.8) on a runtime environment, i define the **memory** (128MB, +64MB steps up to 3GB) => CPU is allocated indirectly, billed for duration that the function runs => serverless, 512MB as temp storage, 15 min timeout limit, Execution Role (IAM Role) permits interaction with other AWS and services<p>
+Lambda languages: Python/Ruby/Java/Go/C# + Custom (e.g. Rust using Layers)<p>
+Lambda Package - 50MB zipped - 250MB unzipped<p>
 ##  AWS Lambda In-depth - PART2 (13:59)
+**Lambda Networking:**
+1. Public Networking (default): Lambda can access Public AWS Services and Internet, best performance, NO ACCESS to VPC (unless Public IPs)
+2. Private Networking: Lambda "in a subnet" which means full access in VPC resources, no access to Public services unless routed accordingly (e.g. using Gateway Endpoint or NAT GW and Internet Gateway). Limitations like anything within a VPS. Lambdas actually run like Fargate, a)OLD way of running:ENIs are injected to the subnet 1 for each -> SLOW, b)NEW way of running: 1 for ALL Lambda -> FAST (90s initial setup but only once ever)
+
+**Lambda Security:**<p>
+Execution Role needs to be provided to the environment (similarly to Instance Role). This role is assumed by Lambda -> the code of the environment gains the permissions of that role, based on the role's permission policy -> A Role is created with a trust policy, trusting lambda and the permissions policy of the role is used to generate the temporary credentials that lambda uses to interact with all the resources.<p>
+Besides Role, Lambda also has ResourcePolicies, which is the opposite. Which Services and Accounts can invoke the Lambda function (like Bucket Policy of S3). This can be changed only from CLI so far.<p>
+Lambda Logs go to CloudWatch Logs **(needs permissions via Execution Role**)<p>
+Lambda Metrics are stored in CLoudWatch<p>
+Lambda can be distributed traced using X-Ray<p>
+
 ##  AWS Lambda In-depth - PART3 (17:24)
+Lambda Invocations:
+1. Synchronous invocation: CLI/API invoking with data and waits response, returns response with data or failure. Errors or retries handled by Client
+2. Asynchronous invocation: AWS service invoking with data (e.g. S3) -> S3 does not wait for response -> Lambda configured number of retries/handles failure, need idempotent code (replayable), Lambda supports destinations -> Lambda can send to SQS,SNS,Lambda, EventBridge. Object is sent so no additional permissions are needed. Unless Lambda needs to read more than the data received
+3. Event Source Mapping: For streams Like DynamoDB/Kinesis or Queues,  Event Batch sent to Lambda for processing (all works or nothing - no partial success). Since the Event Source Mapping needs to read from the stream, it needs the Execution Role of Lambda to have such read permission from the stream
+
+Lambda Version is Code + Configuration, is immutable (unchangeable), has an ARN, $Latest is the latest, Aliases (e.g. Dev,Stage,Pro) can point to versions and change them as we wish<p>
+Execution Context is the environment processing the event using the Lambda function code and is created as follows:
+---cold start---
+1. The environment is created
+2. Runtimes are downloaded and installed
+3. Deployment package is downloaded and installed
+---cold start---
+---warm start---
+run the code for new event data
+---warm start---
+
+Provisioned Concurrency allows us to keep X contexts warn and ready to use to improve start speeds
+Other trick is to use temp to download some items (considering them though that they may not exist), or create DB connections outside the Lambda handler code
 ##  [UPDATE202101] [DEMO] Accessing Private VPC Resources using Lambda w/ TheCatAPI!!!! - PART1 (8:14)
+Deploying Lambda to use EFS in Private Network , accessing Internet every X minutes triggered by Event Bridge
+EFS has two mount targets, 1 to each AZ
+Lambda Execution Role to allow Execution on VPC and Full access on EFS
+EC2 Instance Role to allow Full access on EFS (and SSM to connect)
+EFS Access point is needed for Lambda to access EFS (rootPath, UserIDs, GroupIDs, Permissions)
+Create the Lambda Function -> Configure timeout -> Use private VPC, use two private subnets and a SG allowing outbound connections on port 80 ->
+The Lambda Service will create two ENIs on this VPC/Subnet/SG
+Then Add File system on Lambda selecting the EFS and the access point
+Add the correct code in the Lambda Function
+Create a Schedule Rule in EventBridge to run every two minutes => more images will be downloaded by lambda on EFS => more images shown in the webapp
+
 ##  [UPDATE202101] [DEMO] Accessing Private VPC Resources using Lambda w/ TheCatAPI!!!! - PART2 (17:20)
 ##  [Refresher] CloudWatchEvents & EventBridge (6:58)
 ##  Advanced API Gateway (17:12)
