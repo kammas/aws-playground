@@ -1110,10 +1110,55 @@ Sources can be
 ##  SECTION QUIZ - DATA ANALYTICS
 # APP SERVICES, CONTAINERS & SERVERLESS
 ##  [Refresher] Introduction to containers (17:13)
+Images contain readonly layers, changes are layered onto the image using a differential architecture<p>
+Dockerfile is used to build docker images. Each step creates fs layers<p>
+Docker container is a Docker Image + a R/W Layer<p>
+Container images are Portable, self contained, always run as expected<p>
+Lightweight -Parent OS used, fs layers are shared<p>
+Container only runs the application and environment it needs<p>
+Provides much of the isolation VMs do<p>
+Ports are exposed to the host and beyond<p>
+Application stacks can be multi container<p>
 ##  [DEMO] [Refresher] Creating a Container Image (17:25)
 ##  [Refresher] ECS - Concepts (10:25)
+ECS is to Containers, EC2 is to Virtual Machines<p>
+ECS uses clusters running in the following modes:
+1. EC2 mode (EC2 instances as Container Hosts)
+2. Fargate mode (serverless way of running docker containers)
+
+We create clusters using ECS as follows -> Create a container definition (telling ECS where the container is, DockerHub,ECR etc and also configuration such as port exposed to host) -> Create a task definition (self contained application - which means it can be comprised from many containers - e.g. an App Container, a DB container etc)<p>
+Container Definition -> Pointer to where the container is stored / port exposed<p>
+Task Definition -> all the rest (CPU,Memory, Compatibility Mode[EC2/Fargate] , Network Mode, **Task Role the Role the Containers can assume temporarily**)<p>
+A Task can include 1-N Containers<p>
+A lot of Tasks can include 1 Container<p>
+
+ECS Service, is a configuration how many copies we want of which Task to run (adds capacity and resilience)<p>
+ECS Services are deployed into Cluster<p>
+
 ##  [Refresher] ECS - Cluster Types (13:30)
+EC2 and Fargate Mode Management components:
+1. Scheduling 
+2. Orchestration
+3. ClusterManager
+4. PlacementEngine
+
+EC2 Mode -> EC2 instances run containers -> ASG controls size
+Fargate Mode -> Containers are running in Fargate Shared Infrastructure
+
+While in EC2 mode the containers are within your VPC, in Fargate mode ENIs are injected to my VPC and connectivity is done through them, it can also have Public Internet access if VPC is configured as such
+
+EC2 mode for:
+1. Large workload
+2. Price conscious (with reserved pricing combined)
+
+Fargate mode for:
+1. Overhead (admin) conscious
+2. Small/Burst workloads
+3. Batch/Periodic workloads
+
 ##  [DEMO][Refresher] - Deploying 'container of cats' using Fargate (16:08)
+Create Cluster / Create Task Definition / Add Container / Run Task of Cluster / Deregister Task Definition / Delete Cluster
+
 ##  [Refresher] Simple Notification Service (SNS) (7:49)
 ##  [Refresher] Simple Queue Service [SQS] (15:46)
 ##  Amazon MQ (8:15)
