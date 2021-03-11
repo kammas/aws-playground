@@ -1226,30 +1226,153 @@ Execution Context is the environment processing the event using the Lambda funct
 run the code for new event data
 ---warm start---
 
-Provisioned Concurrency allows us to keep X contexts warn and ready to use to improve start speeds
-Other trick is to use temp to download some items (considering them though that they may not exist), or create DB connections outside the Lambda handler code
+Provisioned Concurrency allows us to keep X contexts warn and ready to use to improve start speeds<p>
+Other trick is to use temp to download some items (considering them though that they may not exist), or create DB connections outside the Lambda handler code<p>
 ##  [UPDATE202101] [DEMO] Accessing Private VPC Resources using Lambda w/ TheCatAPI!!!! - PART1 (8:14)
-Deploying Lambda to use EFS in Private Network , accessing Internet every X minutes triggered by Event Bridge
-EFS has two mount targets, 1 to each AZ
-Lambda Execution Role to allow Execution on VPC and Full access on EFS
-EC2 Instance Role to allow Full access on EFS (and SSM to connect)
-EFS Access point is needed for Lambda to access EFS (rootPath, UserIDs, GroupIDs, Permissions)
+Deploying Lambda to use EFS in Private Network , accessing Internet every X minutes triggered by Event Bridge<p>
+EFS has two mount targets, 1 to each AZ<p>
+Lambda Execution Role to allow Execution on VPC and Full access on EFS<p>
+EC2 Instance Role to allow Full access on EFS (and SSM to connect)<p>
+EFS Access point is needed for Lambda to access EFS (rootPath, UserIDs, GroupIDs, Permissions)<p>
 Create the Lambda Function -> Configure timeout -> Use private VPC, use two private subnets and a SG allowing outbound connections on port 80 ->
-The Lambda Service will create two ENIs on this VPC/Subnet/SG
-Then Add File system on Lambda selecting the EFS and the access point
-Add the correct code in the Lambda Function
-Create a Schedule Rule in EventBridge to run every two minutes => more images will be downloaded by lambda on EFS => more images shown in the webapp
+The Lambda Service will create two ENIs on this VPC/Subnet/SG<p>
+Then Add File system on Lambda selecting the EFS and the access point<p>
+Add the correct code in the Lambda Function<p>
+Create a Schedule Rule in EventBridge to run every two minutes => more images will be downloaded by lambda on EFS => more images shown in the webapp<p>
 
 ##  [UPDATE202101] [DEMO] Accessing Private VPC Resources using Lambda w/ TheCatAPI!!!! - PART2 (17:20)
 ##  [Refresher] CloudWatchEvents & EventBridge (6:58)
+Near real time stream of Events, changes in resources (e.g state change)<p>
+EventBridge can do all the things CloudWatch Events do + Events from third parties + Events from custom applications<p>
+Allows you to configure "If X happens, or at Y time(s)...do Z"<p>
+Each account has a default Event Bus for the services supported generating such events<p>
+In CloudWatch events only the default Event Bus exists vs Event Bridge additional event buses can be added<p>
+Rules match incoming events (or schedules) and deliver the event to the target (e.g. Lambda)<p>
+Resources send state changes or similar to an Event Bus -> Event Bridge monitors Event Bus and checks for matching against the configured Event Pattern Rules or Schedule Rules -> If match then event (json) is sent to Target (e.g. Lambda)<p>
 ##  Advanced API Gateway (17:12)
+API GW Allows us to create and manage APIs and acts as an Endpoint/Entry-point to my services/applications <p>
+HA / scalable / handles authorisation / throttling / caching / CORS / transformations / OpenAPI spec / direct Integration / Public Service / can help on migrations<p>
+Supports HTTP/REST and WebSocket APIs<p>
+
+Flow is:
+1. API Endpoint DNS targeted
+2. Request through Authorization / Validation / Transformation
+3. Integration Service processes
+4. Response through Transform / Prepare / Return
+
+CloudWatch stored Logs and Metrics<p>
+API Gateway Cache can improve performance and reduce backend integration calls<p>
+
+Authentication with Cognito:
+1. Client authenticates with Cognito
+2. Client Receives Token from Cognito
+3. Client sends token to API GW
+4. API GW verifies token with Cognito
+
+Lambda Authorization or Custom authorization:
+1. Client has some bearer token
+2. API GW receive the bearer token and asks Lambda authorizer to validate it
+3. Lambda authorizer calls an exernal provider or an identity store
+4. If authorization is succesful, it returns to API GW an IAM Policy and a Principal Identifier
+5. Lambda responds with success or error code ??
+
+API GW Endpoint types:
+1. Edge Optimized - Routed to the nearest CloudFront POP
+2. Regional - Clients in the same region
+3. Private - Accessible only within VPC via Interface Endpoint
+
+API GW Stages (different url):<p>
+Stages can have different verions of the same service and allows for Canary deployments. In that case the deployment is done on the Canary part of the stage (which serves small part of all traffic), until the canary is promoted to be the new base 'stage'<p>
+
+API GW Errors:<p>
+4xx - Client Error (invalid request etc)<p>
+400 - Bad Request<p>
+403 - Access Denied / Authorizer Denied / WAF Filtered<p>
+429 - Throttle error (exceeded throttle amount)<p>
+
+5xx - Server Error (backend error etc)<p>
+502 - Bad Gateway Exception (bad output returned by lambda)<p>
+503 - Service Unavailable<p>
+504 - Integration Failure/Timeout - 29s limit<p>
+
+Api GW Caching is configured per stage / Default TTL 5 minutes / can be up to 1hour / Cache size 500MB to 237GB / Can be encrypted <p>
+
 ##  [Refresher] AWS Step Functions (16:09)
+Step functions is a product which lets you build long running serverless workflow based applications within AWS which integrate with many AWS services.<p>
+Step Functions helps me build a serverless workflowm like a state machine and orchestrate actions<p>
+Maximum duration 1 year<p>
+
+Workflows:
+1. Standard (1 year maximum)
+2. Express for IoT, mobile applications etc (5 minutes maximum)
+
+Trigger Step Functions using:
+1. API Gateway
+2. IOT Rules
+3. Event Bridge
+4. Lambda
+
+A statemachine can be defined in template in Amazon's States Language (ASL) - JSON template<p>
+IAM Role is used for permissions<p>
+
+States:
+1. Succeed (finished succesfully)
+2. Fail (finished unsuccessfully)
+3. Wait (pause until something happens)
+4. Choice (based on input/situation it will behave (differently)
+5. Parallel (split into two flows running in parallel)
+6. Map (initiate N flows from a batch input)
+7. Task (single unit of work performed by the statemachine - Lambda, Batch, DynamoDB, SNS, SQS, SageMaker, EMR, Glue, Step Functions etc)
+
+Architecture of Cuddletron:
+1. S3 static website. User inputs data (email, phone and configuration params)
+2. Configuration input is sent to Api Gateway and then to a Public Lambda
+3. Public Lambda initiate a Step Function defining when should be sent what kind of message
+4. With Lambda and SNS and SES Email and/or SMS are sent to the User
+
 ##  Simple Workflow Service (SWF) (8:13)
+Legacy, replaced by Step Functions, using actual Instances and Servers<p>
+Workflows contain:
+1. Activity Tasks - A program to perform tasks / The actual thing they do
+2. Activity Workers - The interaction of tasks
+3. Deciders - The part of the code that allows decisions on the flow and actions. Schedules activity Tasks, provides input data to activity workers, processes events that arrive while the workflow is in progress
+
+1 year maximum <p>
+
+Comparison of Step Functions - Simple Workflow (SWF)<p>
+Step functions: Serverless / lower admin / ASL Amazon State Language is less powerful on deciders<p>
+SWF: Servers / higher admin / AWS Flow Framework / External signals influencing workflow / Child flows returning to parent flow (e.g in Verify Order step to do several actions and then return back there) / Bespoke comple app coding the custom decider / Mechanical Turk<p>
+
 ##  Amazon Mechanical Turk (3:44)
+Amazon Mechanical Turk (MTurk) is a crowdsourcing marketplace that makes it easier for individuals and businesses to outsource their processes and jobs to a distributed workforce who can perform these tasks virtually. This could include anything from conducting simple data validation and research to more subjective tasks like survey participation, content moderation, and more. MTurk enables companies to harness the collective intelligence, skills, and insights from a global workforce to streamline business processes, augment data collection and analysis, and accelerate machine learning development.<p>
+
+Requesters post Human Intelligence Tasks (HITs)<p>
+Workers earn by completing HITs<p>
+Qualifications: a test may be required to the Worker as a requirement to complete HITs (to limit the pool to the best)<p>
+e.g. Humans can manually process images to classify them, so as later on these to be able to be used by ML for classification and training<p>
+The output of the mechanical turk can be used by an application directly<p>
 ##  Elastic Transcoder & AWS Elemental MediaConvert (8:45)
+Media Convert is a replacement (superset) of the older Elastic Transcoder<p>
+Both are file-based video transcoding services, both are serverless, adding Queue to Media Convert and Pipelines to Elastic Transcoder<p>
+File loaded on S3 -> Processed -> Stored on S3<p>
+MediaConvert (MC) supports EventBridge and More codecs and Reserved Pricing!!<p>
+Elastic Transcoder ONLY for animated GIFs, MP,FLAC, Vorbis, WAV, WebM<p>
 ##  AWS IOT (6:30)
+AWS IOT Core is a suite of products (Temp sensors, Wind sensors, Water Sensors etc)<p>
+IoT provides also Device Shadows (copies of the last write the device sent to IoT - to reduce unavailability) and Rules as well as event-driven integration with AWS services<p>
+Device messages are sent via JSON encrypted with X.509 certificates and messaging uses MQTT style topic names (sensor/temp/catbed etc)<p>
+These messages are matches with rules and if needed actions take place<p>
 ##  AWS Greengrass (4:15)
+Greengrass extension of the IoT extends some AWS services to the edge.It is added on the devices (open source) to provide better communication and more functionality to the devices<p>
+Allows code to run on Lambda or Containers<p>
+Lambda can even access hardware<p>
+Messaging via MQTT<p>
+
 ##  SAM - Serverless Application Model (5:48)
+SAM is an open source framework to build serverless applications on AWS<p>
+Allows local testing using local lambda invocation<p>
+Can be packaged and deployed to AWS with CFN<p>
+
 ##  [DEMO] SAM CLI (18:57)
 ##  [AdvancedDemo] Build A Serverless App - Pet-Cuddle-o-Tron - PART1 (4:40)
 ##  [AdvancedDemo] Build A Serverless App - Pet-Cuddle-o-Tron - PART2 (7:47)
@@ -1260,19 +1383,142 @@ Create a Schedule Rule in EventBridge to run every two minutes => more images wi
 ##  Section Quiz - APP SERVICES & SERVERLESS
 # CACHING, DELIVERY AND EDGE
 ##  [NEW] CloudFront Architecture - Refresher (16:09)
+Cloudfront is a CDN (Content Delivery Network) aimed to improve delivery of content by caching and using efficiently Global Network<p>
+S3 Origin or Custom Origin, running on a web server with an IPv4 Public IP, is the original location of the content<p>
+**Distribution** is the Configuration i do on CloudFront. Mostly configures though: Cost, WAF, Alternate Domain Names, SSL Certificate, Security Policies, Root object etc<p>
+**Edge Location** are the Global Infrastructure where the data are cached close to Customers<p>
+**Regional Edge Cache** are lareger versions of Edge Locations. They provide another layer of caching<p>
+Every CloudFront distribution has free/automatically a CF domain name
+We route the DNS name of our choice to the CloudFront distibution using the Alternate Domain Names in the Distribution
+When user requests a page/content, first CF Edge Location is checked, (FOR CUSTOM ORIGIN ONLY - if the object does not exist then the Regional Edge Cache eill be checked), if it does not exist even there it will be fetched from the Origin and then stored for TTL time in both the Regional Edge Cache (if CUSTOM ORIGIN) and the Edge Location
+Integrates with ACM for SSL certificates, and CF is for download only. Caches after fetching something not during upload file to S3
+**Behavior** is a configuration within a distribution, matching patterns which can have several Origins, adding others will get priority over the default
+
 ##  [NEW] CloudFront Behaviours (10:49)
+Behaviors contain:
+1. Origin or Origin Group
+2. Access Settings - If the Behavior will be private (which means only users with signed cookies or signed URLs will be able to access the content). This allows me also to select which should be the account that should sign
+3. Compress Objects
+4. Lambda at Edge
+5. All Caching
+6. Precedence (the bigger the higher)
+
+THIS MEANS THAT ON THE SAME DISTRIBUTION I CAN HAVE DIFFERENT BEHAVIORS FOR DIFFERENT PATH PATTERN <p>   
+
 ##  [NEW] TTL and Invalidations (13:53)
+An Object that has expired is not automatically deleted, It is marked as stale and when a user requests it, it checks if the origin has a newer/changed content. If 304 Not modified response comes back it means it will renew it's TTL and be considered again as current, otherwise (200 OK) it will fetch the latest one from Origin<p>
+
+To Force an invalidation of Objects (if we need to do so immediately) <p>
+Default TTL ==24hours<p>
+To manually set the TTL/invalidation of Objects We can direct CloudFront to use specific TTL per Object using headers like 
+1. Cache-Control max-age (seconds)
+2. Cache-Control s-maxage (seconds)
+3. Expires (Date and Time)
+
+To force invalidation of the entire cache OR specific Object Paths of the cache of a distribution we can do so from the console but this applies to all Edge Locations so it takes time .Cache invalidation also costs<p>
+
+Other solution would be to use versioned file names which has several benefits (better logging, less expensive)<p>
+
 ##  [NEW] CloudFront, SSL & SNI (15:10)
+SSL supported by default on cloudfront Default Domain Name <p>
+For Alternate Domain Names i need to a)add alternate domain name on CF distribution , b)add hosted zone ALIAS pointing to CF, c) Add a certificate to have HTTPS using ACM adding a CNAME as requested by Amazon on my domain<p>
+ACM certificates of CF always need to be in us-east-1<p>
+
+Connections - BOTH NEED PUBLIC VALID CERTIFICATE - NOT SELF FIGNED (e.g. having as an Origin a custom website with self signed cert will not work):<p>
+Viewer <-> CloudFront<p>
+CloudFront <-> Origin<p>
+
+In the past one web server could support one host, one certificate. The reason was that the SSL connection was occuring before accessing the site=> didn't know which cert to provide.<p>
+In 2003, SNI was added to TLS. This allows a client to tell a server which domain wants to access and this happens before accessing the web server => the server can provide the correct cert => one server can provide now multiple Https Sites hosted<p>
+
+For older browsers that don't support SNI CF can provide dedicated IP (600$/month)...<p>
+
+For CloudFront <-> Origin certificates:
+1. S3 -> no need for actions . Public certificate supported and exists
+2. Load Balancer -> I will add the same AVM as for CloudFront
+3. Custom Origin -> Need to buy a Public Certificate !!
+
 ##  [NEW] Origin Types & Origin Architecture (10:15)
+Origin Groups can provide resiliency to Origins<p>
+CF provides different features to S3 Private Bucket and S3 Public Bucket (considers it a website)<p>
+
+Origin Access Identity can provide to CF an identity, that can then be allowed to access an S3 Bucket (added in bucket policy) so that only through the CF someone can have access to the contents of the bucket<p>
+To do something similar for custom origins i can add a custom header in the CF, that the Origin will require, so the Origin will be able to deny access from anyone else not using this header (accessing custom origin directly)<p>
+
+For S3 Origin the Viewer protocol and Origin protocol must match (so either both Http or both Https)<p>
+For Custom Origin you can choose Http, Https, Match Viewer<p>
+
+
+
 ##  [NEW] Caching Performance & Optimisation (16:23)
+CACHE HIT -> Matching object delivered from cache<p>
+CACHE MISS -> Matching object not cached (origin fetch)<p>
+
+This applies to more than just the static content (fetched by the object name). <p>
+I can configure which of the following should be considered to forward to origin AND if cache should be used:
+1. Object Name
+2. Query String Parameters
+3. Cookies
+4. Request Headers
+
+DON't forward and DON't cache (default) => no cache hits and incorrect requests (e.g. without params)<p>
+Forward ALL and Cache ALL => no cache hits for things they are the same if a parameter is "not useful"<p>
+Forward ALL and Cache whitelist => cache hit as it should<p>
+
+FORWARD WHAT THE APP NEEDS<p>
+CACHE BASED ON WHAT CHANGES THE OBJECT<p>
+
+
 ##  [NEW] CloudFront Security - OAI & Custom Origins (8:50)
+Enforcing users having access to a private S3 bucket (website disabled) only via Cloudfront is achieved by OAI creating an ARN that Private S3 bucket and the BucketPolicy allows acces only from that ARN (cloudfront)<p>
+Enforcing users having access to a public S3 bucket (website enabled) only via Cloudfront is achieved by:
+1. Enforcing users to use HTTPS and add a custom header. Custom Origin can reject requests not containing the custom header
+2. IP range whitelisting, allowing only requests coming from the whitelisted IPs (cloudfront)
+
 ##  [NEW] CloudFront Security - Private Distributions (9:14)
+Cloudfront in Private mode => requests require a signed Cookie or signed URL<p>
+We can have 1 Distribution with Multiple Behaviours, some being Private and some Public (e.g. for login)<p>
+
+To configure Private Behaviour a CloudFrontKey is needed which is created by an Account Root User. As soon as a Trusted Signer is added to a Behavior this behaviour is Private and needs signed URL or Cookie to be accessed <p>
+
+Signed URLs provide access to ONE object and are also used by Legacy RTMP distributions which can't use Cookies (e.g. by a Lambda Signer)<p>
+Signed Cookies can provide access to groups of Objects (e.g. all .gif) and allows you to keep the URLs same to all users (e.g. by a Lambda Signer)<p>
+
 ##  [NEW] CloudFront Geo Restriction (9:52)
+CF Geo Restriction  - a WHITELIST OR BLACKLIST - For COUNTRY ONLY (Geo IP DB 99.8 accurate / For the ENTIRE distribution)<p>
+e.g. User requests page from CF Edge Location , CF Edge Location asks CF Distribution is Geo Restriction is enabled (yes), CF Edge Location asks Geo IP DB (Country), CFEdge Location asks CF Distribution is country is allowed and show or return 403 Forbidden error  <p>
+
+3rd Party Geolocation - Completely Customizable (can include scenarios completely irrelevant to geolocation, using other user attributes to RESTRICT CONTENT CONDITIONALLY)<p>
+e.g. CF is configured as private => a signedURL or signed Cookie will be mandatory, user asks a page, the App Server  <p>
+
+
+
 ##  [NEW] CloudFront Security - Field-Level Encryption (9:26)
+Problem that field Level Encryption tackes is that the data sent by the viewer will be totally unencrypted after reaching the web application/site
+Solution is to define Field Level Encryption on CF Edge (configure public/private key), then CF Edge encrypts the sensitive fields using the public Key. Whoever has the private key (limited users/apps) will be able to read the sensitive data (can be completely different lifecycle/systems)
+
 ##  [NEW] CloudFront - Lambda@Edge (8:03)
+Lambda@Edge can run lightweight Lambda at edge locations, can adjust data between viewer and origin
+Differences than normal Lambda:
+1. Node.js and Python ONLY
+2. Layers are not supported
+3. It runs in the AWS Public Space (no VPC)
+4. Different Limits (5MB-Sec, 512MB-30sec)
+
+Steps for a classic flow:
+1. Viewer Request (when request arrives CF)
+2. Origin Request (when request leaves CF)
+3. Origin Response (when request arrives CF)
+4. Viewer Response (when request leaves CF)
+
+Use Cases:
+1. A/B Testing - Viewer Request can change according to the test case we want
+2. Migration Between S3 Origins -  Display different Objects based on device capabilities - Content By Country - Origin Request
+
+
 ##  [NEW] Elasticache (12:51)
 Significantly improves latency and throughput for read-heavy application workloads<p>
-Elasticache consists of:
+Elasticache consists of:<p>
 1. Nodes (where instances of MemCache or Redis run. 1 Node - 1 Instance). Has its own DNS name and Port
 2. Redis Shards (grouping of nodes - 1 to 6 nodes)
 3. Clusters (1-90 shards if enabled) comprised of the Shards or the Nodes
@@ -1465,11 +1711,9 @@ AWS Shield provides protection against DDoS Attacks (blocks service from legitim
 **Shield Standard** is Free with **Route 53 and Cloudfront** and protects against Layr 3 and Layr 4 attacks
 **Shield Advanced** provides protection to **EC2, ELB, Global Accelerator, Route 53 and CloudFront** and DDoS Response Team and Financial Insurance
 WAF (Web application Firewall) is a Layer 7 protection so understands Http and Https, Like SQL Injection , Cross site scripting, Geo Blocking, Rate Awareness
-WEBACL (Web Access Control List) of **WAF** is integrated with **ALB, API Gateway and CloudFront**
+**WEB ACL** (Web Access Control List) of **WAF** is integrated with **ALB, API Gateway and CloudFront** and can be configured on ALB to deny requests not containing X header defined in CF or protect in general from XSS, sql injection etc
 Rules are added to WEBACL and are evaluated when traffic arrives
 Route 53 with Shield -> CF with Shield -> CF with WAF rules - WEBACL filters traffic - ALB Shield and WAF -> EC2 to ASG
-
-
 
 ##  Section Quiz - ADVANCED SECURITY AND CONFIG MANAGEMENT
 # DISASTER RECOVERY & BUSINESS CONTINUITY IN AWS
