@@ -1126,6 +1126,9 @@ ECS uses clusters running in the following modes:
 1. EC2 mode (EC2 instances as Container Hosts)
 2. Fargate mode (serverless way of running docker containers)
 
+ECS Execution Task Role IAM: Allows ECS to fetch images from repositories, store CloudWatch logs etc
+ECS Task Role: Allows the task to connect to SQS,DynamoDB etc
+
 We create clusters using ECS as follows -> Create a container definition (telling ECS where the container is, DockerHub,ECR etc and also configuration such as port exposed to host) -> Create a task definition (self contained application - which means it can be comprised from many containers - e.g. an App Container, a DB container etc)<p>
 Container Definition -> Pointer to where the container is stored / port exposed<p>
 Task Definition -> all the rest (CPU,Memory, Compatibility Mode[EC2/Fargate] , Network Mode, **Task Role the Role the Containers can assume temporarily**)<p>
@@ -1620,6 +1623,17 @@ Investigating DMS Tasks:
 1. Missing objects. DMS does not migrate secondary indexes or non-primary key constraints. This will have to be done manually using native DB tools
 1. CDC (change data capture - replication) stuck after full load: Indexes should be there otherwise full table scan,
 
+To migrate with SCT and DMS using different engines:
+1. Snowball Import Job
+1. Source DB configure extraction Agent
+1. using SCT convert schema source to schema dest
+1. new SCT project using registered data extraction agent
+1. create local task and AWS DMS task in AWS SCT with replication of ongoing changes
+1. Copy data to Snowball return to AWS
+1. Allow DMS to copy data from S3 to Target DB
+1. Verify data migration is complete
+1. Cutover to Target DB
+
 DMS is used for a)Modernization, b)Migration and c)Replication purposes<p>
 WQF (Workload Qualification Framework) can help visualizing of the timeline of the migration. It is an AMI provided by Amazon Marketplace with SCT preinstalled<p>
 Best Practices exist in Playbooks<p>
@@ -1666,13 +1680,22 @@ AWS CDK, i can write on javascript/typescript/python/java/.net. Reusability. Sup
 ##  CloudFormation Stack Sets-PART2-DEMO (9:55)
 ##  CloudFormation Stack Roles (6:52)
 ##  Service Catalog (7:25)
+From an IT perspective Service Catalog are services pffered by the IT team, used when different teams want to consume services<p>
+Key product information: Product Owner, Cost, Requirements, Support information, Dependencies, SLAs<p>
+Self Service portal for 'end users'. Can launch products created by IT without messing up with permissions<p>
+Region specific service. <p>
+Admins define products using CloudFormation templates and Service Catalog configuration!! => Service Catalog Portfolios<p>
+End users can launch products (cloud formation stacks)<p>
+
+Need for end users to deploy infrastructure with tight controls in a self service way -> Service Catalog<p>
+
 ##  CI/CD using AWS Code* (15:29)
-CODE - BUILD - TEST - DEPLOY
-CodeCommit - Code Build (+test) - Code Deploy
-Development Pipeline orchstrates these tools easilly
-Pipeline is for ONE AND ONLY ONE branch
-buildspec.yml or .json (Used frode Build to build and test)
-appspec.yml or .json (Used from the CodeDeploy to deploy)
+CODE - BUILD - TEST - DEPLOY<p>
+CodeCommit - Code Build (+test) - Code Deploy<p>
+Development Pipeline orchstrates these tools easilly<p>
+Pipeline is for ONE AND ONLY ONE branch<p>
+buildspec.yml or .json (Used frode Build to build and test)<p>
+appspec.yml or .json (Used from the CodeDeploy to deploy)<p>
 CodeDeploy can deploy to:
 1. Using one or more DOne or more EC2 using deployment group
 2. Elastic Beanstalk or AWS OptsWorks
