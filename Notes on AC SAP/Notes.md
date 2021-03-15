@@ -331,6 +331,7 @@ file-system-id:/ /efs/wp-content efs _netdev,tls,iam 0 0 (replacing file-system-
 S3 standard stores in 3 AZ (11 9s availability) - Price a)GB/m of data stored b)cost for transfer out, c)per 1000 requests - first byte latency can be publicly available<p>
 S3 standard IA, difference smaller cost per GB but retrieval fee, minimum duration for 30 days. Should be used for for data not accessed often, important or irreplaceable and large<p>
 S3 One zone IA, same as S3 IA, but with smaller cost and no resilience. durability is the same (if AZ does not fail). Should be used for for data not accessed often, replaceable and large<p>
+S3 max Object size: 5TB<p>
 
 
 Http 200ok means it is stored succesfully<p>
@@ -1647,13 +1648,49 @@ DMS uses eventual consistency to replicate (CDC) by monitoring/pushing the trans
 ##  [AdvancedDEMO] Database Migration Service-STAGE4 (14:40)
 ##  [AdvancedDEMO] Database Migration Service-STAGE5 (4:27)
 ##  Storage Gateway - Volume Gateway (14:15)
+GENERAL: Storage Gateway is a product (Virtual machine or hardware appliance) that integrates local infrastructure and AWS Storage such as S3,EBS Snapshots, Glacier
+Locally it presents storage using 
+1. iSCSI (SAN -Storage Area Network- and NAS -Network Attached Storage- protocol) - RAW Block Storage
+2. NFS (Linux to share storage) or 
+3. SMB (Windows)
+
+Integrates with EBS, S3 and Glacier
+
+Usages of Storage Gateway:
+1. Migrations
+2. Extensions
+3. Storage Tiering
+4. DR
+5. Replacement of Backup Systems
+
+Volume Gateway (**iSCSI - NAS/SAN**):
+1. Stored Mode - Offers volumes over iSCSI to servers as a SAN or NAS would, CONSUMING CAPACITY FROM ON PREM, STORED LOCALLY. Data are also copied to Upload Buffer and then asynchronously copied to AWS to the Storage Gateway Endpoint (public endpoint), can be using Internet or a Public VIF over DX, ending up to **EBS snapshots**.
+(+) Data are replicated completely (Great RPO and RTO) to AWS very fast and are locally accessible entirely. EBS Snapshots can be used fast to create EBS Volumes used for DR. (-) Data are using On Prem space
+2. Cached Mode - Same as Stored (even EBS volumes can be created from S3 primary storage) except:
+   1. Instead of EBS--> Stored in **S3**
+   2. Instead of On Prem main Storage --> Main Storage is AWS
+   3. Instead of On Prem having all data locally -> On Prem has only cached/more frequent data
+
 ##  Storage Gateway - Tape Gateway (VTL) (12:11)
+Tape Gateway (**iSCSI**) simulates as if there was indeed a media changer and instead of storing data in physical tapes locally, functions like cached mode, sending data to AWS Storage Gateway in one of the two options:
+1. VTLibrary (**S3** storage)
+2. VTShelf (**Glacier** or **Glacier Deep Archive** storage) - Data can be Archived/Retrieved
+
 ##  Storage Gateway - File Gateway (12:17)
+File Gateway (**NFS/SMB**) bridges on Prem File Storage and **S3** by providing Mount Points (shares) via NFS (Linux) or SMB (Windows) and converts files to S3 objects in a bucket. Has LAN-like performance using Read and Write caching
+Each File Share created in the File Gateway on Premises, is linked to a single S3 bucket in my account (so unlike Volume storage i have direct access on S3 objects. This is called **"Bucket Share"**
+File Shares can run using NFS or SMB, SMB AD Auth is also possible using an AD. 
+Primary Data are stored in S3. Local Cache has only some of it
+File Gateway sipports also multi site file sharing, (multiple contributors). Both sites will think they have the files locally while the files will only exist in S3 bucket
+Also there is a "NotifyWhenUploaded" API, so as all Gateways to be notified about Object changes (via CloudWatch)
+Object Locking is not supported (also versions) => Best make one share read only in that case
+We could also use CRR of the S3 bucket
+
 ##  AWS Snowball // Snowball Edge // Snowmobile (10:45)
 Snoball edge has on-board storage and compute poer and supports S3 API<p>
 Use cases:
 1. Bandwidth
-1. No access to the target database/storage
+2. No access to the target database/storage
 Migration Process:
 1. AWS SCT extract data locally and move data to an edge device
 1. Ship edge device to AWS
@@ -1662,6 +1699,19 @@ Migration Process:
 
 Files uploaded to Snowball in order to be able to be uploaded to S3 they need to be <5TB. <p>
 ##  [Refresher] AWS Datasync (9:27)
+Data synchronization/transfer (in/out of AWS)<p>
+Huge Scale Migration, Data Processing Transfers TO and FROM AWS<p>
+
+Each Data Agent can handle 10Gbps data transfer (100TB per day)<p>
+Each Job/Task can handle 50 million files. Defines what is being synced, how quickly, From/TO<p>
+Keeps metadata (permissions/timestamps) + Provides data validation of transferred data<p>
+Allow bandwidth limiter (in case the line is also used for other needs)<p>
+Supports incremental, scheduling, compression, encryption<p>
+
+Cost is per GB (pay as you use)<p>
+
+Data Sync Agent on VM -> Comunicates to SAN/NAS via SMB/NFS -> Datasync Endpoint (over TLS) -> Targets are: S3 various classes, EFS, FSx<p>
+
 ##  SECTION QUIZ - MIGRATIONS & EXTENSIONS
 # DEPLOYMENT & MANAGEMENT
 ##  [Refresher] CloudFormation Refresher (10:55)
