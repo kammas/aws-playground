@@ -1957,11 +1957,43 @@ Patching Flow:
 5. Compliance is achieved using the Systems Manager Inventory to perform inventory on all of the metrics
 
 ##  [NEW][AdvancedDEMO] - Systems Manager - STAGE1 (9:23)
+**Create stack from CF:**
+STAGE1-PatchManagerBase.yaml
+when it completes
+STAGE1-PatchManagerVPCEndpointsandRole.yaml
 ##  [NEW][AdvancedDEMO] - Systems Manager - STAGE2 (13:17)
+Instances -> For the three AWS instances attach the SSM Role from Security (having EC2 Trust Policy and Permissions Policy to alloe SSM to connect, EC2 to send messages and SSM Messages)<p>
+
+Reboot these three Instances so that SSM Agent has for sure all the changes<p>
+
+Go to Systems Manager -> Managed Instances
+We notice that CentOS is missing from the list and this is because CentOS does not have the agent installed by default, we will need to add it<p>
+We add the agent from the bastion host<p>
 ##  [NEW][AdvancedDEMO] - Systems Manager - STAGE3a (8:14)
+On the OnPrem side now we will need to add Managed Instance Activations <p>
+We will provide an IAMRole to the OnPrem instances that they are going to assume indirectly => SMM Creates an Activation Code and activationID that will be used when installing. This allows us to do the same to On Prem Instances without the custom IAM Role<p>
+
+To do so we go to: Systems Manager-> Hybrid Activations -> Create an Activation -> Instance Limit >=3 / We use the default Role -> Create <p>
+
 ##  [NEW][AdvancedDEMO] - Systems Manager - STAGE3b (13:25)
+First we need to connect to the On prem Machines using SSH on port 3389 from the Jumpbox<p>
+Then we install the agent, stop the agent, configure it using the hybrid activation code and activation id, start agent<p>
+Managed SSM instance added<p>
+
+For the Windows machine we will need to do the following:
+On the On Prem Windows EC2 we click on "Get Windows password" and we provide the .pem for the keypair. This will provide us the password
+Use the Remote Desktop of Windows or similar client. Input Username and Password located in previous step
+We install the agent (we removed in the previous step to simulate the installation)
+
+
 ##  [NEW][AdvancedDEMO] - Systems Manager - STAGE4 (8:34)
+we configure the patching
+1. Inventory first (setup inventory that will record all details for Managed Instances every X time to a document)
+2. Patch Manager we will configure patching details per OS (several groupings possible), define maintenance window, for manual selection the default OS patch baseline will be used. patching actually uses a Run command
+
 ##  [NEW][AdvancedDEMO] - Systems Manager - STAGE5 (7:19)
+Patching verification: in maintenance window -> view execution -> task invocatio -> view details ->output +success
+
 ##  SECTION QUIZ - DEPLOYMENT & MANAGEMENT
 # ADVANCED SECURITY AND CONFIG MANAGEMENT
 ##  AWS Guard Duty (4:32)
