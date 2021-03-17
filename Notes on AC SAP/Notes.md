@@ -1715,6 +1715,9 @@ Data Sync Agent on VM -> Comunicates to SAN/NAS via SMB/NFS -> Datasync Endpoint
 ##  SECTION QUIZ - MIGRATIONS & EXTENSIONS
 # DEPLOYMENT & MANAGEMENT
 ##  [Refresher] CloudFormation Refresher (10:55)
+CFN let's me create infratructure in AWS in a consistent way and repeatable way, using templates for Creation/Update or Deletion, in YAML or JSON<p>
+CFN creates Physical Resources from the Logical Resources of the template<p>
+
 Importing Stacks and not hardcoding ARN ensures a deletion of an imported stack does not leave the stack orphan. Prefer it over hardcoded ARN<p>
 cfn-init (try to reach specific end states - unlike bootstrap that runs script)<p>
 cfn-signal can provide accurately if the creation has indeed been completed<p>
@@ -1722,13 +1725,78 @@ cfn-hup to monitor for N time after cfn-init, for changes/actions<p>
 logs of cfn-init and similar are under var/log on Ubuntu<p>
 AWS SAM, i can write on YAML/JSON and also test locally. Supports native transformation<p>
 AWS CDK, i can write on javascript/typescript/python/java/.net. Reusability. Supports native transformation<p>
+
 ##  CloudFormation Custom Resources-PART1-THEORY (11:43)
+Custom Resources are the way to support things that Cloud Formation does not support natively (e.g. an S3 bucket that is emptied automatically during deletion - normally rejects OR use information from an API to initialize an EC2 etc)<p>
+Architecture of Custom Resources:<p>
+Cloud Formation begins the process by sending data to an endpoint i define in the custom Resource (e.g. Lambda function or SNS topic).This event is sent when the stack is Created, Updated or Deleted (the event that is happening + any property information). <p>
+
+I can use as Type: <p>
+AWS::CloudFormation::CustomResource<p>
+OR<p>
+Custom::MyCustomResourceTypeName<p>
+
+It is required to provide also a ServiceToken with an AmazonSNS topic ARN or Lambda Function ARN. Topic must be on the same region in which i am creating the stack<p>
+
+By using Ref we are describing which Resource is dependant on which Resources<p>
+CloudFormation provides to Lambda function a ResponseURL, which Lambda function will send the result of the operation it performed (SUCCESS or FAILURE) <p>
+
 ##  CloudFormation Custom Resources-PART2-DEMO (11:35)
 ##  CloudFormation Nested Stacks (14:17)
+Usually a CFN stack contains everything. This is done when resources usually share a lifecycle<p>
+
+To have more reuseable and also support more than 200 Resources per stack (maximum) as well as be able to reuse other resources e.g. a VPC we use Nested Stack Templates (the Ref can reference resources only on the same stack so we need an alternative)<p>
+
+To do so:
+1. We start with the Root/Parent Stack. This is done by CLI/Console or with some sort of automation. We also provide the parameters the templage may need and we configure the outputs it should produce for other templates/stacks to use
+2. Then we add Other stacks that depend to this stack or between them and they provide to each other parameters and outputs
+
+**Nested Stacks allow reusing the code** of the template of a stack. NOT the actual stack. Also when we want to overcome the 200 resource limit. Installation process easier<p>
+
 ##  CloudFormation Cross-Stack References (10:06)
+**Cross-Stack References reuse resources** created by another stack. Useful when one stack provides services to another stack and they have different lifecycles.<p>
+Cross Region and Cross Account is NOT SUPPORTED<p>
+To do so Outputs of a tempate are exported making them Visible to other stacks , using a unique name in the region for that account<p>
+Instead of !Ref we used in nested stacks we now can use Fn::ImportValue or !ImportValue and we can fetch the value of the other stack Output<p>
+
 ##  CloudFormation Stack Sets-PART1-THEORY (9:21)
+StackSets solve the cross account and region problem in a way. It allows CFN to deploy stacks across accounts and across regions<p>
+StackSets are just containers in an "admin" account which contain stack instances (references to actual stacks running to a single account/specific region)<p>
+**Admin Account (StackSets (StackInstances (Stacks of an account/region) ) )**<p>
+
+Security/Roles: To accomplish this we either use self-managed roles (allowing a user to do so) or we use service-managed roles along with Organizations (allowing CFN service to do so)<p>
+ConcurrentAccounts: The maximum accounts in parallel the StackSet should be applied to <p>
+FailureTolerance: The minimum number of stacks that if failed the StackSet should be considered as failed<p>
+RetainStacks: Whether the stack of specific account/region will be retained or not during a deletion of a StackSet<p>
+
+UseCases for Stacksets:
+1. Enable AWS Config across range of Accounts
+2. AWS Config rules like MFA,EIPS,EBS encryption etc
+3. Create IAM roles for cross account access
+
 ##  CloudFormation Stack Sets-PART2-DEMO (9:55)
+
+Usually Process is: 
+1. Create an OU with accounts we want to target
+2. Go to Stacksets, 
+   1. Create
+   2. Choose CFN template
+   3. Choose service manager permissions or self service permissions
+   4. Deployment options Deploy to org or OU, input AWS OU ID
+      1. Automatic Deployments: If the stackset will be added/removed to the account whenever the account is added/removed from the OU
+      2. Account Removal Behavior: If the stack instances should be deleted or retained during deletion
+   5. Regions 
+   6. Maximum Concurrent
+   7. Failure Tolerance
+
 ##  CloudFormation Stack Roles (6:52)
+By default CFN uses the permissions of the logged in identity or the console or via the CLI to CREATE/UPDATE/DELETE resources of the template<p>
+However CFN also supports Role separation, being able to assume a role to gain the permissions needed. This is done if the identity has the PassRole permission<p>
+
+Steps to accomplish Role Speration are:
+1. Create an IAM Role with permissions to create, update and delete aws resources
+2. A user can have the permission to Create/Update/Delete CFN stacks, as well as PassRole to CFN that allows CFN to provision the resources
+
 ##  Service Catalog (7:25)
 From an IT perspective Service Catalog are services pffered by the IT team, used when different teams want to consume services<p>
 Key product information: Product Owner, Cost, Requirements, Support information, Dependencies, SLAs<p>
@@ -1756,10 +1824,86 @@ CodeDeploy can deploy to:
 7. S3
 
 ##  Elastic Beanstalk (18:47)
+Elastic Beanstalks is a PaaS product, helping Developers manage Application Environments,  where AWS handles most of the things and is Developer Focused, removing infrastructure overhead<p>
+
+Supports: 
+1. Built in languages (Go,Java, Java with tomcat, .Net, Python, Ruby)
+2. Docker single container , multi-container
+3. Custom platforms (Custom via **Packer**)
+
+Terms:
+1. Elastic Beanstalk Application: everything about the application (infrastructure, code, versions etc)
+2. Application Versions: Labeled Versions of deployable code for an application. The source bundle is in S3
+3. Environments: Containers of infrastructure and configuration for a specific application version (e.g. PROD, DEV etc)
+4. Tier: Each environment is a web server tier (designed to communicate with end users), accepting requests from users in ASGs via ELBs or worker tier receiving events via SQS ASG scaling via size of queue (designed to process work in some way from web tier) 
+
+Databases OUT OF BEANSTALK ideally to be able to use blue/green deployments etc easilly<p>
+
+
 ##  [NEW] OpsWorks (15:56)
+OpsWorks as a substitute of Chef/Puppet, to use these skillsets<p> 
+
+Most Control / High Admin <-> Less Control / Low Admin<p>
+CloudFormation  <->   Ops Works   <->   Elastic Beanstalk<p>
+
+OpsWorks 3 Modes:
+1. Puppet Enterprise -> AWS Managed Puppet Master Server (real Puppet)
+2. Chef Automate -> AWS Managed Chef Servers (real Chef)
+3. OpsWorks -> AWS Integrated Chef, No Servers (most convenient)
+
+Stacks are container of resources
+Layers are specific functions within a stack (e.g. Load Balancer/DB)
+Recipes (install packages/run scripts) and Cookbooks (collection of Recipes stored in Github)
+Lifecycle Events (Setup,Configure,Deploy,Shutdown) e.g. when Configure is running on EC2 ot may run in all EC2 in parallel - awareness of other instances
+Instances Options (supporting auto healing):
+1. 24/7 (started manually)
+2. Time-Based (start and stop on a schedule)
+3. Load-Based (turn on or off based on Metrics - like ASG)
+
+
+
 ##  AWS Systems Manager - Agent Architecture (7:39)
+Simple Systems Manager (SSM) allows view and control of AWS and On premises Infrastructure<p>
+SSM is Agent based so an agent needs to be installed on Windows and Linux AWS AMIs, to convert them to managed Instances<p>
+Manage Inventory (operatins systems, network configuration) and Patch Assets (system patches, hotfixes), Run Commands, Desired State (e.g. certain ports always closed)<p>
+Parameter store for storing configuration and secrets (Secrets Manager is better though for secrets)<p>
+
+**For AWS Instances:**<p>
+Session Manager allows us to connect to EC2 even in private VPCs. To do so we need to do the following
+1. Attach an Instance Role to the Instance with the permissions required to interact with SYstems Manager
+2. Allow connectivity from the Instance to the Systems Manager Endpoint (in AWS Public Zone) using an IGW or VPCendpoint 
+
+**For On Prem Instances:**<p>
+Session Manager allows us to connect to Virtual or Physical servers on premises. To do so we need to do the following
+1. Internet connectivity from On prem to AWS
+2. Managed Instance Activations must be created. For each we receive an Activation Code and an ActivationID. Agent in the On Prem will need these to complete the setup
+   
 ##  AWS Systems Manager - Run Command (4:47)
+Run Commands allows us to run Command Documents (which can be reused and have parameters) on Managed Instances, using the installed Agents, automatically based on Instances, Tags or Resource Groups<p>
+Run Commands can be executed using Rate control which means control over Concurrency (how many parallel executions) and Error Threshold (on how many failures to be considered as failed)<p>
+Output of Run Command -> S3 -> SNS<p>
+Run commands can be triggered by SSM, Console UI, CLI and Event Bridge by sending to the Systems Manager Endpoint:
+1. Command Document and Targets
+2. Command Parameters
+
+
 ##  AWS Systems Manager - Patch Manager (12:00)
+Patch Manager allows to patch Windows and Linux instances
+Patch Baseline defines what should be installed (what patches and hotfixes)
+1. For **Linux AWS-[OS]DefaultPatchBaseline** explicitly define patches e.g. AWS-AmazonLinux2DefaultPatchBaseline
+2. For Windows **AWS-DefaultPatchBaseline** OR **AWS-WindowsPredefinedPatchBaseline-OS**- Critical and Security Updates
+3. For Windows **AWS-WindowsPredefinedPatchBaseline-OS-Applications** - Critical and Security Updates + MS App Updates
+Patch Groups which are the Resources we want Patch Manager to patch on our behalf
+Run Command, Concurrency and Error Threshold<p>
+Compliance is the verification if the patch was applied succesfully<p>
+
+Patching Flow:
+1. Define the PatchBaselines (what gets installed)
+2. Define Patch Groups (on which resources)
+3. Maintenance Window (the glue defining when, for how long , on which group, what tasks)
+4. AWS-RunPatchBaseline runs with a Baseline and Targets, This is the Run command that is been used to patch the machines indide patch groups
+5. Compliance is achieved using the Systems Manager Inventory to perform inventory on all of the metrics
+
 ##  [NEW][AdvancedDEMO] - Systems Manager - STAGE1 (9:23)
 ##  [NEW][AdvancedDEMO] - Systems Manager - STAGE2 (13:17)
 ##  [NEW][AdvancedDEMO] - Systems Manager - STAGE3a (8:14)
@@ -1769,37 +1913,233 @@ CodeDeploy can deploy to:
 ##  SECTION QUIZ - DEPLOYMENT & MANAGEMENT
 # ADVANCED SECURITY AND CONFIG MANAGEMENT
 ##  AWS Guard Duty (4:32)
+Continuous security monitoring service that analyses supported data sources by using AI/ML and threat intelligence feeds<p>
+Identifies unexpected and unauthorised activity automatically. <p>
+I can influence it by whitelisting IPs or flagging as ok behaviour but it learns from what happens normally within any managed accounts<p>
+Can be configured to notify or event-driven to proceed to protection/remediation<p>
+Supports multiple MASTER and MEMBER accounts by invitation <p>
+Receives DNS Logs, VPC Flow Logs, CloudTrail Event Logs, CloudTrain Management Events, CloudTrail S3 Data Events --> Findings to Event Bridge --> SNS or Lambda<p>
+
 ##  AWS Config (6:39)
+Records configuration changes on resources by creating configuration items (what was the initial and resulting configuration, who changed, relationship to other resources)<p>
+It is not preventive, ONLY provides auditing of changes and compliance with standards<p>
+Regional Service but it also supports cross-region and account aggregation<p>
+Changes can trigger events <p>
+Changes are stored in an S3 bucket for search in a consistent way<p>
+Recources can be evaluated for compliancy against Config Rules and trigger Event Bridge (to further call SNS or Lambda or SSM if not compliant)<p>
+
 ##  AWS Inspector (7:26)
+Product designed to check EC2 and OSs and their Network Config for vulnerabilities and deviations against best practices (every 15min, 1h, 8,12h, 1day)
+Ways of Operation:<p>
+1. Agentless -> Can provide Network Assesment
+2. Agent -> Network and Host Assesment
+
+Rules packages determine what is checked<p>
+
+Some results for reachability checks (**Network Reachability** package):
+1. RecognizedPortWithListener (Public open port and app is listening on OS)
+2. RecognizedPortNoListener (Public Open port and no listener on OS)
+3. RecognizedPortNoAgent (Public open port no info as there is no agent installed)
+
+Rules Package **Host Assessments** (Agent is required):
+1. Common Vulnerabilities and Exposures (CVE) - List with IDs
+2. Center for Internet Security (CIS) benchmarks - Industry best practices, consensus based to help organizations improve their security
+3. Security best practices for Amazon Inspector (root login, SSH, permissions etc)
+
 ##  [Refresher] Encryption 101 - PART1 (14:13)
+**Encryption at rest**, only one party knows the secret so as to be able to encrypt and decrypt the data<p>
+**Encryption in transit** , applies an encryption tunnel around the data to protect them from eaves dropping<p>
+
+**Plaintext** is UNENCRYPTED data (text, images, app, anything)<p>
+**Key** is password or other<p>
+**CipherText** is ENCRYPTED data (anything)<p>
+**Algorithm** is a piece of code/maths, Plaintext + Key -> Encrypted Data/CipherText (eg Blowfish, AES, RC4,RC5,RC6, DES)<p>
+
+**Symmetric Encryption** allows encryption and decryption using the same Key <p>
+**Asymmetric Encryption** allows encryption and verification with a public key and decryption and signing with a private key (used by PGP, TLS, SSH) - much more recource consuming than symmetric<p>
+
 ##  [Refresher] Encryption 101 - PART2 (7:10)
+Encryption flow with Public/Private Key between A <-> B, B is the one holding the Public and Private Key
+1. A requests the Public Key from B
+2. A encrypts asymmetrically using Public Key and sends to B
+3. B decrypts ciphertext using private key
+4. B encrypts and signs the response and sends to A 
+5. A verifies signature using the Public Key
+
+Steganography is the technique of hiding secret data within an ordinary, non-secret, file or message in order to avoid detection; the secret data is then extracted at its destination.<p> 
+The use of steganography can be combined with encryption as an extra step for hiding or protecting data. <p>
+
+
 ##  Key Management Service (KMS) (18:03)
+Regional and Public Service that allows you to create, store and manage cryptographic Symmetric and Asymmetric keys<p>
+Keys never leave KMS. Provide FIPS 140-2 (L2) security<p>
+
+Keys:
+1. CMK (Customer Master Key) - a logical container - contains: ID, creation date, policy, description, state (active or not) - backed by physical key material which can either be generated by KMS or imported to KMS, used to encrypt / decrypt data up to 4Kb.<p>
+Flow is: Users asks KMS to createKey -> Kms generates CMK and encrypts it to store it on disk (CMK') -> User asks to encrypt data X, (with key and having permissions) ->
+KMS decrypts CMK' to produce CMK and then encrypts X to become X' and gives to user -> Users asks to decrypt X' (KMS does not need the key it is encoded in ciphertext)<p>
+CMKs are isolated to a REGION and CAN NEVER LEAVE <p>
+CMKs are AWS Managed (roteted every 1095 days) or Customer Managed (more configurable). Both support rotation and contain all previous versions and all CMKs have key policies<p>
+Aliases of CMKs allows me to rotate CMKs<p>
+Key policy trusts an account, Account can add IAM permission policies to IAM users in that account so that different User/Instance can have createKey permissions and different Encrypt/Decrypt permissions
+   1. Key Type Symmetric
+   2. Key Type Asymmetric
+   3. Key Origin KMS
+   4. Key Origin External
+   5. Key Origin HSM
+1.  DEK (Data Encryption Key) can be generated by KMS using a CMK to helps us encrypt data > 4Kb
+Flow is: User asks KMS to use a CMK to generate a DEK -> KMS generates the DEK and DEK' and links it to the CMK. DEK is NEVER STORED ANYWHERE. KMS provides the user with a plaintext version of the key (DEK) AND a ciphertext version of the key (DEK') encrypted by the CMK -> User encrypts data (X') with plaintext version DEK and stores X'  <p>
+The actual encryption of the Data>4Kb is done by the service or my code, NOT BY KMS <p>
+Decrypting i need the X' and the CMK, KMS provides the DEK, i use to decrypt<p>
+
 ##  CloudHSM (15:10)
+**Harware Security Module (HSM)** overcomes the following security concerns related to KMS: a)the shared service concern, b)Admins of KMS manage the hardware and software. <p>
+CloudHSM is a true single tenant Harware Security Module that AWS provisions but is fully customer managed. AWS has no access to keys<p>
+Federal Information Pricessing Standard Publication (FIPS) 140-2 L3<p>
+HSM is accessed with industry standard APIs: (PKCS#11, Java Cryptography Extensions (JCE), Microsoft CryptoNG (CNG) libraries)<p>
+KMS can use CloudHSM as a custom keystore (recent integration)<p>
+
+CloudHSM are deployed in an AWS CloudHSMVPC, multiple HSMs are deployed and used in a cluster (they replicate the keys and config), one in every AZ, injected to my VPC subnets via ENIs (1 per subnet). Instances will need to load balance between both ENIs.<p>
+
+CloudHSM cannot be used from S3 SSE or other AWS APIs<p>
+CloudHSM can be used for Client Side encryption<p>
+CloudHSM can be used for offloading SSL/TLS processing for web servers<p>
+CloudHSM can be used by Oracle for TDE (Transparent Data Encryption)<p>
+CloudHSM can be used to protect the private keys for an issuing certificate authority<p>
+
 ##  AWS Certificate Manager (ACM) (11:21)
-##  [Refresher] AWS Parameter Store (5:20)
+AWS Certificate Manager (ACM) provides SSL/TLS encryption, proves identity of servers using digital certificates that are signed by a trusted authority, 
+ACM lets me run a public or private Certificate Authority<p>
+Private CA: Application needs to trust the private CA<p>
+Public CA: Browsers have a list of trusted providers<p>
+ACM generates (DNS or email verification - AWS responsible for renewal) or imports certificates (i am responsible for renewal)<p>
+
+ACM certificates are deployed to supported services and inaccessible to me (CloudFront and ALB)<p>
+ACM is regional and can't be imported to other region => ALB in south-east-2 needs a certificate from ACM generated in south-east-2<p>
+Cloudfront's certificates are ALL in us-east-1<p>
+CloudFront Edge locations though will copy the certificate to their Region (no problem there)<p>
+
+##  [Refresher] AWS Systems Manager Parameter Store (5:20)
+Parameter Store integrates excellent with AWS services to store/allow them to fetch Values of parameters <p>
+Types of parameters are String, StringList and SecureString<p>
+Supports Hierarchies (e.g. /wordpress/ for /wordpress/DBUser and /wordpess/DBPassword) and Versions of the parameters<p>
+Can store Plaintext or Ciphertext (with KMS support) to protect passwords<p>
+Public Parameters like LatestAMIId<p>
+Public Servicem tightly integrated with IAM and Permissions<p>
+
+
 ##  [Refresher] AWS Secrets Manager (7:47)
+Secrets Manager is designed for Secrets (passwords, keys etc)<p>
+Usable via Console, VLI, API, SDKs<p>
+Supports Automatic rotation of Secrets using Lambda<p>
+Directly integrates with some AWS products (RDS)<p>
+An application with Secrets Manager can use a role (or access keys but it is not ideal) to request IAM credentials authorization to fetch the secrets the app needs. Secrets Manager will handle then the rotation keys to RDS etc<p>
+
 ##  VPC Flow Logs & Flow Logs vs Packet Sniffing (11:16)
+Essential diagnotstic tool for complex networks CAPTURING ONLY PACKET METADATA (source/dest IP, source/dest port, packet size)<p>
+Applied in three levels:
+1. VPC (all ENIs on the VPC)
+2. Subnet (all ENIs on that subnet)
+3. Interface directly
+
+Small delay of logs (unreliable for real time)<p>
+
+Destination can be S3 or CloudWatch<p>
+
+Protocol ICMP=1, TCP=6, UDP=17<p>
+
+Some logs are not recorde like to and from 169.254.169.254, DHCP, DNS, Amazon Windows license<p>
+
 ##  [Refresher] AWS WAF and Shield (12:57)
-AWS Shield provides protection against DDoS Attacks (blocks service from legitimate users by overloading system)
-**Shield Standard** is Free with **Route 53 and Cloudfront** and protects against Layr 3 and Layr 4 attacks
-**Shield Advanced** provides protection to **EC2, ELB, Global Accelerator, Route 53 and CloudFront** and DDoS Response Team and Financial Insurance
-WAF (Web application Firewall) is a Layer 7 protection so understands Http and Https, Like SQL Injection , Cross site scripting, Geo Blocking, Rate Awareness
-**WEB ACL** (Web Access Control List) of **WAF** is integrated with **ALB, API Gateway and CloudFront** and can be configured on ALB to deny requests not containing X header defined in CF or protect in general from XSS, sql injection etc
-Rules are added to WEBACL and are evaluated when traffic arrives
-Route 53 with Shield -> CF with Shield -> CF with WAF rules - WEBACL filters traffic - ALB Shield and WAF -> EC2 to ASG
+AWS Shield provides protection against DDoS Attacks (blocks service from legitimate users by overloading system)<p>
+**Shield Standard** is Free with **Route 53 and Cloudfront** and protects against Layr 3 and Layr 4 attacks<p>
+**Shield Advanced** provides protection to **EC2, ELB, Global Accelerator, Route 53 and CloudFront** and DDoS Response Team and Financial Insurance<p>
+WAF (Web application Firewall) is a Layer 7 protection so understands Http and Https, Like SQL Injection , Cross site scripting, Geo Blocking, Rate Awareness<p>
+**WEB ACL** (Web Access Control List) of **WAF** is integrated with **ALB, API Gateway and CloudFront** and can be configured on ALB to deny requests not containing X header defined in CF or protect in general from XSS, sql injection etc<p>
+Rules are added to WEBACL and are evaluated when traffic arrives<p>
+Route 53 with Shield -> CF with Shield -> CF with WAF rules - WEBACL filters traffic - ALB Shield and WAF -> EC2 to ASG<p>
 
 ##  Section Quiz - ADVANCED SECURITY AND CONFIG MANAGEMENT
 # DISASTER RECOVERY & BUSINESS CONTINUITY IN AWS
 ##  Types of DR - Cold, Warm, PilotLight (17:41)
+CHEAP (slow) < - > EXPENSIVE (fast)<p>
+
+Backup and Restore      <->         Pilot Light         <->                                  Warm Standby           <->          Active/Active Multi Site<p>
+(You have to build it)    (some configuration + copy of DB - empty house)      (all running on smaller backup instances)         (same infrastructure running)<p>
+
+To decide which DR answer: How important is it to your business? <p>
+
 ##  DR Architecture - Storage (8:09)
+Worst to Best
+1. Instance Stores (temp storage)
+2. EBS (1 AZ)m Snapshot of EBS Volume to S3 (3+ AZs in a Region) , with S3 SRR becomes multi region backup
+3. EFS (multiple AZs)
+4. S3
+
 ##  DR Architecture - Compute (7:52)
+Worst to Best:
+1. EC2 (EBS can be reattached to other host) - ECS EC2 mode or Fargate
+2. EC2 with ASG - ECS with ASG
+3. Lambda Private 
+4. Lambda Public (region resilient)
+   
+
+
 ##  DR Architecture - Database (10:20)
+Worst to Best:
+1. DB on EC2...
+2. Dynamo DB replication in multiple AZ
+3. RDS multiple Subnets single instance or primary/standby => Synchronous replication
+4. Aurora one or more replica per AZ +cluster shared storage
+5. Dynamo DB Global - multi master (last writer wins)
+6. Aurora Global (not multi master) - done on storage layer
+7. RDS Cross Region Replicas 
+
 ##  DR Architecture - Networking (8:22)
+Subnet, Interface Endpoint AZ resilient<p>
+VPC, VPC Router, IGW, ELBs, Gateway Endpoint Region Resilient<p>
+R53 Global Resilient<p>
+
+
 ##  Section Quiz - DISASTER RECOVERY & BUSINESS CONTINUITY IN AWS
 # EVERYTHING ELSE
 ##  Amazon Lex & Connect (7:45)
+Lex -> Speech to Text (powers Alexa) - Automatic Speech Recognition - Natural Language Understanding (intent) <p>
+Scales well , Quick to deploy , Pay as you go pricing<p>
+Use Cases: Chatbox, Automated Support, Voice assistants, Q&A Bots, Info Enterprise Bots<p>
+
+Connect -> Contact center as a service, omni channel (voice and chat, incoming and outgoing)<p>
+Integrates with PSTN networks for traditional voice<p>
+
+Agents can connect using the internet from anywhere<p>
+Integrates with Lambda and Lex for addiotional intelligence<p>
+
+e.g. we make a call , Connect accepts the call, forwards call to LEX t9 determine intent and hands over to Lambda to make next actions<p>
+
 ##  AWS Rekognition (4:51)
+Deep Learning Image and Video Analysis
+1. Identify Objects
+2. people
+3. text
+4. activities
+5. content moderation
+6. Face detection
+7. face analysis
+8. face cnmparison
+9. pathing etc
+
+Pricing per image or per minute (video)<p>
+
+Can also analyse live video streams<p>
+
+
 ##  Kinesis Video Streams (5:09)
+Kinesis Viceo Streams allows to ingest live video from producers such as security cameras, smartphone, cars, drones etc<p>
+
+Can persist and encrypt data (in transist and at rest)<p>
+DATA ARE NOT ACCESSIBLE DIRECTLY - ONLY VIA APIS<p>
+e.g. Kinesis Video Streams can push data ->  To Rekognition Video Service -> Compared to face collection using Kinesis Data Stream -> Forwarded to Lambda and if Face detected  -> SNS Notification <p>
+
 ##  AWS Glue (6:23)
 Glue is a fully managed serverless ETL service (Extract,Transform and Load - like Talend) that helps us organize and format out data for use with e.g. Redshift<p>
 AWS Glue can extract data from a source (S3,RDS,JDBC,DynamoDB,Kinesis Data Streams, Apache Kafka), clean it up, transform it and then move it to our desired datastore (e.g. S3, RDS, JDBC, Redshift, Elastic Map Reduce)<p>
@@ -1825,3 +2165,7 @@ Glue Jobs:
 
 DataPipelines is what was used before Glue and is not Serverless. Requires instances to run but is similar<p>
 ##  Device Farm (4:19)
+Service which provides Managed Web and Mobile Application Testing (test on a fleet of real browsers and devices)<p>
+Application Binary -> Device Farm -> Analyse Apllication looking for minimum requirements (SDK, OS,Devices) -> Define tests to run (Explorer, Fuzz, Appium ,Calabash) -> Configure which devices tests should be run against from the wide selection of devices available within device farm -> Configure device state, additional apps, radio states, device location, device language, detailed test results, logs and other outputs<p>
+
+(supports also remote debugging)<p>
