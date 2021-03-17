@@ -3,26 +3,30 @@
 ##  [DEMO] Create and secure the master account (12:23)
 ##  [DEMO] Create the ORG, member accounts (6:09)
 ##  [DEMO] Configure Role Switch and CLI access using roles (16:04)
-# Tech Fundamentals [IF YOU NEED A REFRESHER - IF IN DOUBT .. WATCH]
-##  YAML101 - YAML AINT MARKUP LANGUAGE (9:55)
-##  JSON101 - JavaScript Object Notation (7:32)
-##  Network Starter Pack - 0 - INTRO (5:00)
-##  Network Starter Pack - 1 - PHYSICAL (10:02)
-##  Network Starter Pack - 2 - Data Link - Part 1 (8:47)
-##  Network Starter Pack - 2 - Data Link - Part 2 (14:24)
-##  Network Starter Pack - 3 - Network - Part 1 (12:12)
-##  Network Starter Pack - 3 - Network - Part 2 (19:13)
-##  Network Starter Pack - 3 - Network - Part 3 (15:21)
-##  Network Starter Pack - 4 - Transport - Part 1 (15:39)
-##  Network Starter Pack - 4 - Transport - Part 2 (17:08)
-##  Network Starter Pack - EXTRA - Network Address Translation - PART1 (11:00)
-##  Network Starter Pack - EXTRA - Network Address Translation - PART2 (9:38)
-##  Network Starter Pack - EXTRA - Subnetting - PART1 (14:35)
-##  Network Starter Pack - EXTRA - Subnetting - PART2 (10:33)
-##  Distributed Denial of Service (DDoS) attack (14:38)
 ##  Secure Sockets Layer (SSL) and Transport Layer Security (TLS) (11:41)
+TLS is a newer version of SSL
+Provides Privacy, Data Integrity and Identity verification (of server) between client and server
+1. Cipher Suites are agreed: (Client tells server SSL/TLS version, list of supported cipher suited, session ID -> Server provides SSL/TLS version, one cipherSuite and the server certificate verifiable by the trusted Certificate Auhtority/Browser/OS. The certificate contains the public key)->
+2. Authentication happens: (CA verifies DNS and certificate and send some data for server to verify it can decrypt them)  
+3. Keys are exchanged: (Client generates pre-master key, encrypts it with the server's public key and sends to server, server decrypts it with its private key. Both sides generate the MasterSecret using the pre-master key and the algorithm they have agreed. Both sides confirm the handshake ans Symmetric encryption is used later on ) 
+
 # ADVANCED PERMISSIONS & ACCOUNTS
 ##  Security Token Service (STS) (6:53)
+STS generates temp credentials whenever the sts:AssumeRole operation is used and similar to access keys are generated (access key and secret but they are temporary) when requested by an AWS or External Identity (web federation like FB/Google)<p>
+
+TRUST POLICY controls WHO can assume the role<p>
+
+
+e.g Switching roles in Console UI -> i am assuming role in another AWS account (sts provides the temp credentials)<p>
+
+So in the member account a role with name "OrganizationAccountAccessRole" has as trusted entity the account "XXXXXX" and this allows users of the account to use the "AdministratorAccess" policy permissions we have assigned to that Role <p>
+
+FLOW: 
+1. An Identity asks From STS to assume a Role
+2. STS checks the Trust Policy of the role and proceeds if identity is trusted
+3. STS checks the Permissions Policy of the Role
+4. STS generates an STS Token containing  temporary credentials
+
 ##  Revoking IAM Role Temporary Security Credentials (9:23)
 ##  [DEMO] Revoking Temporary Credentials - PART1 (13:03)
 ##  [DEMO] Revoking Temporary Credentials - PART2 (10:07)
@@ -45,23 +49,71 @@ Provides Allows or Denies. Default is all Allow (which is the same as if there i
 SCPs are Account Permissions Boundaries and Limit what the account can do<p>
 
 **Effective Permissions of Identities in an account with SCP** are "What is allowed in a SCP" INTERSECTION "Identity Policies in Accounts"<p>
-
-
 ##  AWS Permissions Evaluation (10:14)
+
+Policy Evaluation Logic
+1. Explicit Deny
+2. Organization SCPs (maximum allowed or denied permissions for an Account, OU or Organization) 
+3. Resource Policies (permissions related to a resource)
+4. IAM Identity Boundaries (Boundaries of the User e.g. not being able to change password on an account different than his)
+5. Session Policies (subset of the full permissions of the role for the specific STS Token)
+6. Identity Policies 
+
+
 ##  [DEMO] Cross Account Access to S3 - SETUP (10:54)
 ##  [DEMO] Cross Account Access to S3 - PART1 (13:36)
 ##  [DEMO] Cross Account Access to S3 - PART2 (7:02)
 ##  AWS Resource Access Manager (RAM) (14:43)
+RAM allows the share of resources between AWS accounts, as long as RAM supports the product and allows sharing across Accounts, OUs and ORG<p>
+Shared resources are accessed natively from Identities, need to ensure that Accounts are using same AZs (to do so the AZ IDs must be used to ensure both Accounts refer to the same physical AZ)<p>
+Owner account creates a share (defining a principal - Account/OU/Org- with whom to share), provides a name and has the full ownership and control, others can only use it (subset of permissions). For non Org accounts a share will be received and must be accepted first. Common case is Shared Service VPC, to provide infrastructure to be used by other VPCs and accounts
+e.g. Shared Services VPC has twp subnets, with AWS RAM we provide access to other accounts called Participant Accounts<p>
+No Charge for RAM<p>
+No accounts can see and modify non-shared recources that they did not create and own<p>
+
+
+
 ##  [DEMO] Shared ORG VPC - PART1 (11:17)
 ##  [DEMO] Shared ORG VPC - PART2 (16:04)
 ##  Service Quotas (13:27)
+Each service has a default per-region quota (or per account). Many of these can be increased (soft limit)<p>
+
 ##  SECTION QUIZ - ADVANCED PERMISSIONS & ACCOUNTS
 # ADVANCED IDENTITIES & FEDERATION
 ##  SAML2.0 Identity Federation (12:21)
+Identity Federation is the process where we can use an identity of a different Identity Provider to access AWS resources (default 12 hour validity)<p>
+
+Security Assertion Markup Language SAML is an open standard used by several providers such as Microsoft AD, allows to use indirectly on-prem IDs for exchange to valid AWS credentials<p>
+
+SAML2.0 Identify Federation needs a compatible Enterprise Identity Provider and allows an existing Identity Management team, having more than 5000 users (limit of IAM) to access AWS resources<p>
+
+Architecture with Apps:<p>
+MSADFS Identity Provider On Prem and IAM have a two way trust -> User authenticates through the App -> ADFS IdP verifies credentials and identifies his roles -> Application receives from IdP a SAML Assertion -> App communicates to STS using sts:AssumeRoleWithSAML + SAML Assertion -> Application receives from STS Temp AWS Credentials -> DynamoDB for example is no accessible with these Credentials<p>
+
+Architecture with SSO:<p>
+MSADFS Identity Provider On Prem and SAML SSO Endpoint have a two way trust -> User accesses the IDP portal (not SSO portal]) _> ADFS IdP verified credentials and identifies his roles -> Client receives the SAML Assertion -> Client communicates to SAML/SSO Endpointthe SAML Assertion -> SAML/SSO Endpoint communicates to STS using sts:AssumeRoleWithSAML + SAML Assertion -> SAML/SSO Endpoint receives from STS Temp AWS Credentials -> Client receives temp AWS Credentials -> Redirected to management console using the URL<p>
+
 ##  AWS Single Sign-on (SSO) (9:57)
+Allows SSO for AWS accounts and External Applications using a Flexible Identity Source system (handles the complexity and differences of Identity Stores)<p>
+
+Supports:
+1. Built-In Identity Store
+2. AWS Managed Microsoft AD
+3. Microsoft AD (two way trust or AD connector)
+4. SAML 2.0 with any External Identity Provider
+
+Customer Identities (Twitter/FB) we will use Cognito<p>
+Enterprise Workplace Identities use SSO<p>
+
 ##  [DEMO] Adding Single Sign-on to the Animals4life ORG - PART1 (15:05)
 ##  [DEMO] Adding Single Sign-on to the Animals4life ORG - PART2 (11:13)
 ##  Amazon Cognito (6:21)
+Cognito is a managed service for Web and Mobile applications, providing authentication services and authorization as well as management of users for Web and Mobile Users, as well as Data Synchronization, Identity Merging and a managed login UI<p>
+
+Cognito User Pools are used to Authenticate users of a Cognito user pool or Social Identities. Lambda may be involved. Succesful sign in returns a Cognito Token (JWT)<p>
+Cognito Identity Pool allows the exchange of a JWT with a Role defined in the Identity Pool for AWS Temp Credentials. This means the app can now access S3, DynamoDB, SQS , SNS etc<p>
+
+
 ##  [AdvancedDemo] Using Web Identity Federation - PART1 (8:51)
 ##  [AdvancedDemo] Using Web Identity Federation - PART2 (8:27)
 ##  [AdvancedDemo] Using Web Identity Federation - PART3 (8:33)
