@@ -6,7 +6,7 @@
 ##  Secure Sockets Layer (SSL) and Transport Layer Security (TLS) (11:41)
 TLS is a newer version of SSL
 Provides Privacy, Data Integrity and Identity verification (of server) between client and server
-1. Cipher Suites are agreed: (Client tells server SSL/TLS version, list of supported cipher suited, session ID -> Server provides SSL/TLS version, one cipherSuite and the server certificate verifiable by the trusted Certificate Auhtority/Browser/OS. The certificate contains the public key)->
+1. Cipher Suites are agreed: (Client tells server SSL/TLS version, list of supported cipher suited\s, session ID -> Server provides SSL/TLS version, one cipherSuite and the server certificate verifiable by the trusted Certificate Auhority/Browser/OS. The certificate contains the public key)->
 2. Authentication happens: (CA verifies DNS and certificate and send some data for server to verify it can decrypt them)  
 3. Keys are exchanged: (Client generates pre-master key, encrypts it with the server's public key and sends to server, server decrypts it with its private key. Both sides generate the MasterSecret using the pre-master key and the algorithm they have agreed. Both sides confirm the handshake ans Symmetric encryption is used later on ) 
 
