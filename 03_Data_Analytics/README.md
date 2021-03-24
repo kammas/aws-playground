@@ -22,7 +22,7 @@ aws cloudformation create-stack \
   --profile $PROFILE
 ```
 
-## Deploy Main Stack changes
+## Deploy Main Stack changes.
 ```shell
 PROFILE=cloudguru
 STACKNAME=mystack02
@@ -37,5 +37,9 @@ aws cloudformation deploy \
 
 CLI commands used:
 
-aws-cli
+--upload file to s3
+aws s3 cp cli.txt
+
+--move file to s3
+aws s3 mv movemeCLI.txt s3://
 
