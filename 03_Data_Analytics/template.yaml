@@ -290,6 +290,11 @@ Resources:
         - !Ref PBRT1
       ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
       VpcId: !Ref VPC1
+# OUTPUTS
+Outputs:
+  BucketName:
+    Value: !Ref PKBUCKETPBS31
+    Description: Name of the sample Amazon S3 bucket with CORS enabled.
 
   
   
