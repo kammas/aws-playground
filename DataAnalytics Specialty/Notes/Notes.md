@@ -38,7 +38,12 @@ Digital Use Cases:
 ## Services:
 ### Glue & Glue Data Catalog
 ### S3 
-
+Data management using Console/CLI/SDK
+Transfer Acceleration 
+1. for faster Uploads to the buckets (global fast content ingestion)
+2. Enabled per bucket
+3. TA endpoints
+4. Additional Cost
 
 ### DynamoDB
 ### Kinesis Data Streams
