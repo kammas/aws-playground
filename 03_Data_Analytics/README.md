@@ -1,11 +1,14 @@
+## Architecture
+![image](data_analytics_1.png)
 
-
-### Deploying the full infrastructure via CLI 
+## Deploying the full infrastructure via CLI 
+```shell
 aws configure --profile cloudguru
 aws configure list --profile cloudguru
 aws s3 ls --profile cloudguru
+```
 
-# Create Main Stack
+## Create Main Stack
 ```shell
 PROFILE=cloudguru
 STACKNAME=mystack02
@@ -19,7 +22,7 @@ aws cloudformation create-stack \
   --profile $PROFILE
 ```
 
-# Deploy Main Stack changes
+## Deploy Main Stack changes
 ```shell
 PROFILE=cloudguru
 STACKNAME=mystack02
@@ -31,4 +34,8 @@ aws cloudformation deploy \
   --region $REGION \
   --profile $PROFILE
 ```
+
+CLI commands used:
+
+aws-cli
 
