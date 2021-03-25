@@ -35,11 +35,14 @@ aws cloudformation deploy \
   --profile $PROFILE
 ```
 
-CLI commands used:
+**CLI commands used:**
 
 --upload file to s3
-aws s3 cp cli.txt
+aws s3 cp cli.txt s3://mystack02-pkbucketpbs31-fxytpnqyev1v --profile $PROFILE
 
 --move file to s3
-aws s3 mv movemeCLI.txt s3://
+aws s3 mv movemeCLI.txt s3://mystack02-pkbucketpbs31-fxytpnqyev1v --profile $PROFILE
+
+--sync from local to S3
+aws s3 sync . s3://mystack02-pkbucketpbs31-fxytpnqyev1v --profile $PROFILE
 

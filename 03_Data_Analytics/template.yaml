@@ -292,7 +292,10 @@ Resources:
       VpcId: !Ref VPC1
 # OUTPUTS
 Outputs:
-  BucketName:
+  PrivateBucketName:
+    Value: !Ref PKBUCKETPRS31
+    Description: Name of the sample Amazon S3 bucket with CORS enabled.
+  PublicBucketName:
     Value: !Ref PKBUCKETPBS31
     Description: Name of the sample Amazon S3 bucket with CORS enabled.
 
