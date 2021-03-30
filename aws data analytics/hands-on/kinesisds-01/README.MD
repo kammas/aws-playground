@@ -5,6 +5,8 @@ aws configure list --profile cloudguru
 aws s3 ls --profile cloudguru
 ```
 
+Create a Kinesis Data Stream using name 'my-data-stream'
+
 ## Create Main Stack
 ```shell
 PROFILE=cloudguru

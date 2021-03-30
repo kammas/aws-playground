@@ -2,7 +2,7 @@ Parameters:
   KinesisDataStream:
     Description: The name of your Kinesis Data Stream.
     Type: String
-    Default: 'my-data-stream-pk' 
+    Default: 'my-data-stream' 
 Mappings:
   RegionMap:
     us-east-1:
@@ -111,8 +111,4 @@ Resources:
             Action: 
               - "sts:AssumeRole"
       RoleName: data-producer-role-kinesis-lab-ml-specialty-course
-  KinesisDS:
-    Type: AWS::Kinesis::Stream
-    Properties:
-      Name: ${KinesisDataStream}
-      ShardCount: 2    
+ 

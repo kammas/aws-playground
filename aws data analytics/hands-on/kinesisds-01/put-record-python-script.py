@@ -18,7 +18,7 @@ while True:
         random_user = data[random_user_index]
         random_user = json.dumps(data[random_user_index])
         client.put_record(
-                StreamName='<INSERT_YOUR_STREAM_NAME>',
+                StreamName='my-data-stream',
                 Data=random_user,
                 PartitionKey=partition_key)
         time.sleep(random.uniform(0, 1))
