@@ -1,11 +1,12 @@
 ### Deploying the full infrastructure via CLI 
+```
 aws configure --profile cloudguru
 aws configure list --profile cloudguru
 aws s3 ls --profile cloudguru
 
 R53DOMAIN=test.cmcloudlab418.info
 R53HOSTEDZONEID=Z06477252EF829S6D3XJG
-
+```
 
 # Create Main Stack
 ```shell
