@@ -333,7 +333,57 @@ EMR is in ONE AZ to gain the benefits of network and performance
 1. Instance Storage - Very high I/O for low cost, best used for temporary data
 2. EBS Volume - EBS Volumes are ephemeral, they are used to add more storage to HDFS
 3. HDFS - Fast but ephemeral, distributed storage, best used for caching
-4. EMRFS - 
+4. EMRFS - Using S3
+
+EMR Operations - Transient (short lived) vs Long-Running (running almost forever...)
+1. Transient Use cases (better EMRFS with S3): e.g. something to be calculated every Monday morning, to show graph to Business
+2. Long Running Use Cases (better HDFS also provides higher I/O): e.g. 
+
+Default Soft Limit is 20EC2 instances per region for EMR
+
+Replication Factor needs to be taken into consideration when choosing Core nodes
+3 for 10+ nodes
+2 for 4-9 nodes
+1 for 1-3 nodes
+
+AWS suggest using fewer large cluster nodes (instead of more smaller due to failure possibilities and maintenance) 
+
+Reference of Instance Types per scenario
+
+We can monitor EMR resources using CloudWatch configuration by Creating Rules matching the Event Pattern (e.g. for state change or similar)
+
+IMPORTANT: WE CANNOT HAVE LESS CORE NODES THAN THE REPLICATION FACTOR (SO RESIZING IS LIMITED) - TO DO SO we will need first to change the replication factor in hdfs-site.xml, restart the NameNode deamon and then resize accordingly
+
+Hadoop splits the files in chunks automatically if HDFS is used or Files are split in multiple Http range requests
+Due to that the compression algorithm that we will be using should support splitting
+
+**Gzip and Snappy** are NOT splittable but has a high/low compression ratio and a medium/very fast compress/decompress speed
+**bzip2 and LZO** ARE SPLITTABLE and have a Very high/low compression ratio and a slow/fast compress/decompress speed
+
+Benefits of File compression:
+1. Better performance
+2. Less network traffic
+3. Reduced Storage Costs
+
+**File Formats**:
+1. Test:Everywhere
+2. Parquet: Column-oriented (common in the hadoop ecosystem)
+3. ORC: Optimized row columnar (highly efficient way to store data)
+4. Sequence File: (Used Extensively with Map Reduce input/output formats)
+5. Avro: Row Oriented Data serialization (developed and used by hadoop)
+
+In general we would prefer splittable compressed files around 2-4 GB or 1-2GB if not splittable
+We need to avoid smaller filed less than 100MB
+If i have smaler files i can reduce the HDFS block size (e.g. to 1MB from 128MB which is the default)
+
+Copying files within a cluster is done using the DistCP tool/command, but we can also use the **S3DistCp** (from S3 to HDFS) to copy or combine smaller files to bigger ones
+
+**FAQ**:
+1. **How much does EMR cost?** We pay for the EC2 instances running and S3 usage (can optimize using dedicatedmreserved or spot instances)
+2. **What security measures can i use for the communication between EMR and S3?** EMR -> S3 always uses https +i can encrypt data uploaded to S3 and decrypt when EMR fetches data from S3
+3. **How can i prevent unwanted users from vieweing the data on EMR during a job execution?** On Each EMR cluster there are two Security Groups. One for the primary node and one for the secondary nodes (core and task). By default these are allowed communicating ONLY to each other
+4. **How do i configure custom Hadoop settings for my cluster?** Using predfined Bootstrap actions on startup. These are applied using the Console, or the CLI ot a config object in a JSON
+5. **When should i use core nodes vs task nodes?** Core Nodes => Reserved capacity AND STORAGE until the job completes. Task nodes for processing without storage on temp basis
 
 
 ### Lambda
