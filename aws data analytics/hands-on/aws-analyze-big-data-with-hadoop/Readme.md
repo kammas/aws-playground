@@ -16,7 +16,7 @@ https://s3.console.aws.amazon.com/s3/upload/pkammasemrbucket?region=us-east-1
 ```
 PROFILE=cloudguru
 
-aws configure --profile  $PROFILE
+aws configure --profile  $PROFILE 
 
 aws emr create-default-roles --profile $PROFILE
 
