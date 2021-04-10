@@ -26,6 +26,13 @@
 
 ##  Data Analytics Overview
 
+Big Data are defined by:
+1. Volume (how many they are)
+2. Velocity (how fast they grow)
+3. Variety (how different they are - video/text/images etc)
+
+Do the above factors affect our ability to extract value?
+
 ![image](img/firefox_6OowElceXL.png)
 Figure - Data Analytics Steps for Success
 
@@ -283,11 +290,94 @@ Zookepers nodes to coordinate the broker Nodes and manage partitions (similar to
 ### EMR and Hadoop Ecosystem
 Involved in Preparation and Analysis stages<p>
 
+**Hadoop and HDFS overview:**
+Hadoop 2.x stores data in at least three nodes and has rack awareness (so it knows if the nodes are in the same rack)
+Stored two Data Nodes on the same rack and the third one on a different rack
+Client writes first data Node to cluster, -> First data node writes second data node to same rack -> second data node writes third data node to a different rack
+The name nodes maintain info about where all the data nodes reside
+YARN (Yet Another Resource Negotiator) accesses the middle layer -> Uses a)Global Resource Manager b)Per application, Application Master to manage distribution among the nodes
+Client sends Data Nodes to Resource Manager running on a Name Node-> Resource Manager allocates resources by communicating with the Node Manager of a Data Node -> Node Managers manage Containers -> Resources (Memory/CPU/Disk/Network)
+
+Big Data Job Types:
+1. Map Reduce - parallel processing of large data sets (structured or unstructured)
+2. Hive - Data warehousing infrastructure for querying large data sets (HQL)
+3. Pig - Programming environment for data tasks (SQL + MR)
+
+Use Cases for Hadoop:
+1. Retail: lots of sales data (volume) - no place to store them and proces them => load data on hadoop cluster and analyze data using HQL from Hive
+2. Power Grid: multiple real time data (velocity) need realtime and historical analysis => hadoop cluster and a continuous analysis system + historical analysis of trends leading to problem
+3. Bank Risk: assess risks from consumer mortgages disparate data sources (variety) => hadoop cluster / pattern matching enabled data sources to be keyed by customer account
+
+Hadoop v1 uses Map Reduce for Data Processing and Data Management
+Hadoop v2 uses MapReduceV2 for Data processing and YARN for Data Management
+Many applications (MapReduce, PIG, HIVE, HBASE, Storm, Giraph, Spark, OpenMPI, Weave) can use YARN to access HDFS using Hadoop V2
+
+Hadoop v1 can have about 4000 data nodes and does not scale well as metadata has to be in memory and had the master as a single point of failure
+Hadoop v2 has also a Passive name node in Active Passive configuration that can take over if the main Name Node fails. All writes go to Active Name Node, Reads can go to either the Active or Passive Name Node
+
+YARN manages Application Masters (if they fail YARN recreates them)
+Application Master manages Tasks (if they fail Application recreates them)
+
+Tuple==record (row)
+Attribute==column
+
+NoSql: Non-relational databases, designed for distributed environments
+1. Key-value stores
+   1. Keys access stored values
+   2. The most flexible model
+   3. Efficient and scalable
+   4. Not effective as transactional database   
+2. Wide-column stores
+   1. Columns, Column Family, Super Column Family
+   2. High Performance and scalable
+3. Document stores
+   1. similar to key value stores
+   2. value is a single document
+4. Graph stores
+   1. Focus on relationships
+   2. Nodes and edges
+
+**Relational vs No-Sql**
+Scaling: Vertical - Need to add power vs Horizontal - Need to add servers
+Querying: Powerful with SQL vs Not so powerful using UnSQL
+ACID: ACID compliance vs ACID can be achieved with specific designs - excels at Brewer's CAP theorem (Consistency/Availability/Partition tolerance)
+
+**OLTP vs OLAP:**
+Constant transactions vs Periodic large updates/complex queries
+Opertional Data vs Consolidated data
+Short term vs Long term
+GB vs TB/PB
+Many Users vs Few
+constant data protection and fault tolerance vs Periodic protections
+
+Data Marts are small Data Warehouses focusing only on one subject (department-wide data)
+
+
 **Map Reduce** technique Data Scientists can use to distribute processing across nodes to process faster
 SPLITTING PHASE
 Workload is split across N nodes so that it can be processed in parallel -> MAP Phase
 SHUFFLING PHASE
 Joining the parallel results -> REDUCE Phase
+1. Provides scale out architecture
+2. Provides processing of structured and unstructured data
+3. runs on large clusters of commodity hardware
+4. fault tolerant
+5. optimized scheduling
+6. flexibility for developers
+7. interoperates with tools like hive and pig
+
+MapReduce guarantees that the after the shuffle phase the input to every Reduces will be grouped by key and after reduce phase the sum of these group by keys
+
+MapReduce Joins,  similar to joining table rows using JOIN
+1. Map Side joins are performed on the mapper and are fast but has constraints like all records of the same key to be on the same partition, equal number of partitions, sorted by same key
+2. Reduce side joins are performed on the reducer, less efficient, but has less constarints
+3. Distributed cache joins are used on a map-side join, and copy small files to memory on nodes before join (can be efficient)
+
+**Combiner** is an optional mini-reducer that can run between the Map phase and the Reduce phase. Partitioner creates as many partitions as keys
+
+**Mappers** using interface map() map key value pairs, **Reducers** using the reduce() interface reduce data to final outputs
+
+Execution can take place using the Java jar command or the Streaming API
 
 
 **Distributed File Systems** HDFS is difficult to setup a Hadoop Cluster
@@ -352,10 +442,14 @@ Reference of Instance Types per scenario
 
 We can monitor EMR resources using CloudWatch configuration by Creating Rules matching the Event Pattern (e.g. for state change or similar)
 
-IMPORTANT: WE CANNOT HAVE LESS CORE NODES THAN THE REPLICATION FACTOR (SO RESIZING IS LIMITED) - TO DO SO we will need first to change the replication factor in hdfs-site.xml, restart the NameNode deamon and then resize accordingly
+**IMPORTANT**: WE CANNOT HAVE LESS CORE NODES THAN THE REPLICATION FACTOR (SO RESIZING IS LIMITED) - TO DO SO we will need first to change the replication factor in hdfs-site.xml, restart the NameNode deamon and then resize accordingly
 
 Hadoop splits the files in chunks automatically if HDFS is used or Files are split in multiple Http range requests
 Due to that the compression algorithm that we will be using should support splitting
+
+**IMPORTANT**: I must decouple Storage from Compute so as to be able to minimize costs efficiently
+
+I can also use the cluster nodes along with s3distcp to copy in parallel data from S3 to HDFS
 
 **Gzip and Snappy** are NOT splittable but has a high/low compression ratio and a medium/very fast compress/decompress speed
 **bzip2 and LZO** ARE SPLITTABLE and have a Very high/low compression ratio and a slow/fast compress/decompress speed
@@ -509,3 +603,6 @@ re:Invent
 *[Effective Data Lakes: Challenges and Design Patterns (ANT316)](https://www.youtube.com/watch?v=v5lkNHib7bw&list=PL2byMoCZ9UcJ8mt9NbR845Hti9fl7HEX0)*<p>
 *[Amazon Redshift Masterclass - Note that this link starts the video at the 18:30 mark, which is where the technical information starts and the marketing crap stops.](https://www.youtube.com/watch?v=GgLKodmL5xE&list=PL2byMoCZ9UcJ8mt9NbR845Hti9fl7HEX0&t=1110s)*<p>
 *[Amazon DynamoDB Deep Dive: Advanced Design Patterns for DynamoDB (DAT401)](https://www.youtube.com/watch?v=HaEPXoXVf2k&list=PL2byMoCZ9UcJ8mt9NbR845Hti9fl7HEX0)*<p>
+
+Digital Training:
+*[Curriculum Big Data Technology Fundamentals Online (Released 2016)](https://www.aws.training/Details/Curriculum?id=11070)*<p>
