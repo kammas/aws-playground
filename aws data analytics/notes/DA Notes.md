@@ -24,6 +24,159 @@
     2.  Apply data protection and encryption techniques
     3.  Apply data governance and compliance controls
 
+
+## General Big Data
+We have created a Haddop Cluster and we administer it using Ambari (Hortonworks Sandbox)
+We can upload to Hive the CSVs, by specifying the field delimiter, we give it a table name and table columns and afterwards we can run Hive Queries
+When we run a Hive query, the SQL is converted to MapReduce Jobs, executed and returns the results
+
+**Hadoop Ecosystem:**
+1. Core Hadoop:
+   1. HDFS (allows us to distribute the storage + maintain redundant copies)
+   2. YARN (Yet Another Resource Negotiator - the system that manages the resources on the cluster - orchestrator)
+   3. Mesos (alternative to YARN)
+   4. MapReduce (Programming model to process data)
+   5. Spark (can run on top of YARN or MESOS like MapReduce - needs programming using Java/Python/Scala)
+   6. TEZ (usually used along with Hive to accelerate it) - faster than MapReduce
+   7. Pig (For SQL friends that want to avoid Java/Python - Pig will transform it to code)
+   8. Hive (Allows us to execute SQL queries like when having a relational DB)
+   9. Apache Ambari (UI for everything in Core Hadoop) - Competitors Cloudera/MapR
+   10. HBASE (No SQL database storing processed data so that they can be fetched by webapps or similar)
+   11. Apache Storm (process streaming data)
+   12. Oozie (can act like an orchstrator driving data to various technologie)
+   13. zookeeper (technology for coordinating everything - which nodes are up/down)
+   14. data ingestion
+       1.  Scoop (connector to legacy DBs)
+       2.  Flume (fleet of web servers)
+       3.  Kafka (collects data from any source and broadcasts them to the hadoop cluster)
+2. Query Engines:
+   1. Apache Drill: (write SQL queries towards an HBase or Cassandra)
+   2. Hue: (write queries )
+   3. Phoenix: (provides also ACID guarantees)
+   4. Presto: (execute queries to the entire cluster)
+   5. Apache Zeppelin: (notebook approach to interacting with the cluster)
+3. External Data Storage:
+   1. MySql (can receive data from Core Hadoop)
+   2. Cassandra (columnar data store - eg for web Application)
+   3. mongo DB (document data store - eg for web application)
+
+
+![image](img/firefox_AnpdWZH2Om.png)
+
+
+![image](img/firefox_au25oPP6LE.png)
+
+
+
+
+HDFS splits huge files into smaller blocks across several computers
+
+**Reading a File in Hadoop**
+![image](img/firefox_wURTJOKHQL.png)
+
+
+**Writing a file in Hadoop**
+![image](img/firefox_YBSBD77JVR.png)
+
+Name Node resilience:
+1. Backup Metadata (writes to localdisk and NFS) - easy but not best way
+2. Secondary Namenode - copy to restore (slightly better)
+3. HDFS Federation - Namenode may have specific namespace volume (partitioning)
+4. HDFS High Availability - Best way - Hot Standby namenode using shared edit log (not hdfs shared log + zookeeper for client to know where client to talk to) - to ensure only one namenode is up at all times extreme measures can be taken (e.g. zookeper may trigger instant power down to other namenode)
+
+Using HDFS:
+1. UI (Ambari)
+2. CLI
+3. HTTP/HDFS Proxies
+4. Java interface
+5. NFS Gateway
+
+MapReduce: To make the mapping we split the input data based on the key that we want them to be aggregated later on - the "for each" (e.g. the user in the "how many movies each user rated question" )
+**Mapper** first keeps the Key,Value and dumps the rest of the data to reduce bandwidth
+**MapReduce automatically** does the "**Shuffle and Sort**" -> sorts keys and groups values by their keys to avoid duplicate keys
+**Reducer** can easilly use the list of values for each key to calculate the result for each key
+![image](img/firefox_RcPkhbWzE3.png)
+
+Mappers and Reducers can be written in Python using the Streaming of stdIn and stdOut (so a mapper will send data to stdIn and receive data to stdOut)
+
+Handling Failure:
+Application Master makes restarts ad needed
+Alternatively YARN will try to restart Application Master
+Alternatively the Resource Manager will try to restart the Node
+Alternatively Zookeeper can be configured to have a hot standby
+
+Usually for MapReduce and Python we can use mrjob and mrstep libraries
+
+Ampari:
+1. Can be the first step to install Ampari and then install everything from there
+2. Full Dashboard for Hadoop Cluster 
+
+Pig:
+1. Allows us to use Pog Latin as an SQL Like Scripting language to define map and reduce steps instead of using map reduce, mappers and reducers which are harder to use
+2. Highly extensible with User Defined Functions
+3. If run with TEZ it can outperform MapReduce performance
+4. I can have UDF in jar files (java)
+
+Spark:
+1. Can run on a hadoop cluster or its own cluster
+2. With Python,Java or Scala can provide a Resilient Distributed Dataset (RDD)
+3. Compoenents: 
+   1. Spark Core 
+   2. Spark Streaming 
+   3. Spark SQL 
+   4. MLLib (for ML) 
+   5. GraphX (Graph/Social Network etc)
+4. Scala is better than Python for Spark
+
+**Spark RDD (Resilient Distributed Dataset)**
+
+Creating RDDs:
+1. creating an RDD named nums: nums=parallelize([1,2,3,4])
+2. text file from file, s3, hdfs
+3. from a hive context
+4. jdbc
+5. cassandra
+6. HBase
+7. Elasticsearch
+8. JSON,CSV,sequence files, object files, various compressed files
+
+What we can do with RDDs:
+1. map (when target is the same nr of rows as source)
+2. flatmap (when i want to change the target nr of rows based on criteria)
+3. filter (to remove rows based on criteria)
+4. distinct (the distinct unique values in an RDD)
+5. sample (random lines)
+6. union, intersection, subtract, cartesian
+
+RDD Actions:
+1. collect
+2. count
+3. countByValues
+4. take
+5. top
+6. reduce
+7. ...more...
+
+
+spark-submit allows me to run from CLI pySPark scripts using the cluster and not a single node/thread   
+
+**SparkSQL and Spark 2.0 (best way) of doing things:**
+We are able to extend RDDs to a DataFrame object (row objects which can contain stuctured Data)
+**DataFrame** is really a **DataSet** of Row Objects
+DataSets can inform us better on compile time about errors
+
+Querying using Spark and DataFrames:
+1. Import SparkSession,Row and functions
+2. Convert Text File --> Rdd --> DataFrame
+3. Apply function on dataFrame to get groupBy movieId rating
+4. Apply function on dataFrame to get groupBy movieId count
+5. Join count and rating
+
+ML Lib:
+1. same as above create a DataFrame containing userId,movieId, rating
+2. Cache this DataFrame to avoid recreating
+3. 
+
 ##  Data Analytics Overview
 
 Big Data are defined by:
@@ -302,6 +455,36 @@ Big Data Job Types:
 1. Map Reduce - parallel processing of large data sets (structured or unstructured)
 2. Hive - Data warehousing infrastructure for querying large data sets (HQL)
 3. Pig - Programming environment for data tasks (SQL + MR)
+
+**Hive:**
+Hive is a Data Warehouse software project built on top of hadoop for providing data query and analysis
+Uses MapReduce for calculations and HDFS for storage => massive scale is supported
+Hive can scale with the data and supports unstructured,semi-structured, structured. (schema on read), no ACID support, cost efficient, can run on old hardware, distributed architecture,open source and evolving
+Hive Components that communicate with Hadoop:
+1. WebUI
+2. CLI
+3. JDBC
+4. ODBC
+
+Driver maintains the session handle and statistics
+Query Compiler within the driver transforms query to MapReduce task with the help of Metastore
+Pruning also is done
+Metastore stores the system catalog (stored in RDBMS for fast performance)
+Thrift Server is used to support multiple languages
+
+CLI query -> Driver -> Compiler translated it to DAG -> Driver sends DAG to execution engine
+
+Hive Data:
+1. Database (organizes production tables into logical groups)
+2. Tables ()
+3. Partitions
+4. Buckets (file in a table directory)
+
+
+
+
+**Pig:**
+
 
 Use Cases for Hadoop:
 1. Retail: lots of sales data (volume) - no place to store them and proces them => load data on hadoop cluster and analyze data using HQL from Hive
