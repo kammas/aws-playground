@@ -175,7 +175,12 @@ Querying using Spark and DataFrames:
 ML Lib:
 1. same as above create a DataFrame containing userId,movieId, rating
 2. Cache this DataFrame to avoid recreating
-3. 
+
+Hive used for
+1. Online analytics
+2. With Thrift server provide allows external services to interact with Hive externally 
+3. "Views" are similar to SQL views in terms that it creates a logical construct but no data are copied . we can reuse them for further select/joins
+
 
 ##  Data Analytics Overview
 
