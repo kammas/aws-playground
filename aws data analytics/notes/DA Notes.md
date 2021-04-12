@@ -176,11 +176,114 @@ ML Lib:
 1. same as above create a DataFrame containing userId,movieId, rating
 2. Cache this DataFrame to avoid recreating
 
-Hive used for
+Hive:
 1. Online analytics
 2. With Thrift server provide allows external services to interact with Hive externally 
-3. "Views" are similar to SQL views in terms that it creates a logical construct but no data are copied . we can reuse them for further select/joins
+3. "Views" are similar to SQL views in terms that it creates a logical construct  
+   1. LOAD DATA - will NOT make a copy, similar to VIEWS of SQL
+   2. LOAD DATA LOCAL - will make a copy, similar to MATERIALIZED VIEWS
+   3. External table - will not make a copy, similar to EXTERNAL TABLES (for shared data)
+4. Uses SCHEMA ON READ
+5. Partitions define where the data are stored
+   
+**Scoop**: Can umport data from MySQL to HDFS and can also make **incremental imports** using --check-column and --last-value parameters and have multiple mappers defines and also the same for export from Hive to MySQL
 
+**NoSQL databases**
+1. HBase: Built on top of HDFS, having a very fast very scalable transactional system (implementation of the Google papers on BigTable). It can automatically repartition
+2. APIs with Thrift and Avro provide max performance but can be out of date due to needs of same versioning in client and server
+3. REST is good enough alternative
+
+CAP Theorem (Consistency / Availability / Partition-tolerance) - you can have only 2
+1. Consistency: (eventual consistency - does not have to be realtime)
+2. Availability: (reliable with redundancy)
+3. Partition-tolerant (partitioned and clustered)
+
+For No SQL we definitely need P and A, so we can sacrifice some C (eventual consistency)
+This can be done on a query basis though
+
+Cassandra (Availability and Partition Tolerance VS Consistency):
+There is no master node, the most high available, it is non-relational, has multiple nodes, uses gossip protocol, 
+
+![image](img/firefox_d7a3MyTkj5.png)
+
+Cassandra supports also Read Replication to separate transaction DB from DWH DB
+
+DataStax offers a Spark-Cassandra connector and can read and write Cassandra tables as DataFrames
+
+Cassandra + Spark Use Cases:
+1. Spark for Analytics of data stored in Cassandra
+2. Use Spark to transform data and store to Cassandra for transactional use
+
+Mongo DB (Consistency and Partition Tolerance VS Availability ):
+Single Master offers consistency in the expense of Availability if it goes down
+In Mongo DB, Collections contain Documents
+Arbiter Node can be used (only one) helps reducing cost (less nodes)
+Replicas help for durability only () nor scaling
+Can work without hadoop or with
+
+**Choosing a Database:**
+1. Integration Considerations
+2. Scaling Requirements
+3. Support Considerations (security etc)
+4. Budget Considerations
+5. CAP Considerations 
+
+**Query Engines:**
+1. Drill: SQL queries across Mongo DB or S3 or Google Cloud Storage or Hive or JSON or Parquet on HDFS (based on Google's Dremel) even Tableau with connectors - JSON representation - Even Join with different engines. Bad: Does not support Cassandra
+2. Phoenix: SQL for HBase ONLY supports transactions, fast, low latency, OLTP support. Integrates with MapReduce, Spark, Hive, Pig, Flume. Supports User Defined Functions
+3. Presto: (By Facebook) Can supports Cassandra (similar to Drill supports MongoDB, several datastores, Kafka, Postgre, Redis, etc) - used for 300PD Data warehouse queries by FB
+
+**Hadoop Infrastructure Management Technologies**
+1. Hadoop YARN: Enabled Spark and Tez (MapReduce better alternatives) to be functional, YARN is the Compute layer of the cluster, while HDFS is the Storage layer of the cluster. MAP Reduce is replaced with Application (generalizes the compute). We can have redundancy with Zookeeper monitoring YARN 
+2. Tez: (uses YARN) Accelerates Hive,Pig,MapReduce, constructs Directed Acyclic Graphs (DAGs). relies on a more holistic view of your job
+3. Mesos: (another resource negotiator) - From Twitter - A more generic YARN alternative for web servers, small scripts etc Spark and Storm has great support for Mesos. Can cooperate with Yarn with Myriad
+(Mesos is great but Kubernetes/Docker are also great alternatives)
+4. Zookeeper: Tool applications can use to recover from partial failures in your cluster (knows which node is the master, which tasks are assigned to which workers, which workers are currelty available)  - Zookeeper ensemble for replication (fleet of Zookeeper servers) - zookeeper quorum (most probably we need 5 servers) - Zookeeper has similar problems to MongoDB (Availability)
+   1. Master election
+   2. Crash Detection
+   3. Group Management (what workers are available)
+   4. Metadata (list of outstanding tasks, task assignments)
+5. Oozie: Orchestrating your hadoop jobs (for running and scheduling hadoop tasks)
+6. Zeppelin: Notebook interface to BigData
+7. HUE (Hadoop User Experience): Used by Cloudera (kind of alternative to Ampari - without the manager)
+
+Older Services
+1. Ganglia (older Ambari)
+2. Chukwa (supplanted by Flume and Kafka)
+
+## Streaming
+**Kafka**
+Streaming lets you publish this data in real time to your cluster
+Kafka is a general publish/subscribe messaging system
+Each consumer is maintaining the position he has in the stream (to know what is still to be processed)
+Stream Processors can read Kafka streams, process them and resubmit them to a different Kafka stream
+Consumers of Different groups will get their own copy of each message
+
+1 Consumer Group - N Consumers
+1 Consumer - N Streams subscribed
+
+**Flume**
+Alternative Streaming more related to Hadoop Ecosystem
+Can use builtin:
+1. Directory
+2. Avro
+3. Kafka
+4. Exec (linux process)
+5. Thrift
+6. Netcat (monitor a port)
+7. Http
+8. Custom
+9. More...
+
+With Avro agents can connect to agents => e.g. for Logs they may sent them to local Flume agents and they in turn send the logs to a remote Flume agent and all together may go to HDFS
+
+
+
+
+
+
+What i would like: 
+Zeppelin + Hue + Spark + Cassandra + Presto +HDFS +Kafka
 
 ##  Data Analytics Overview
 
